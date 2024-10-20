@@ -34,9 +34,84 @@ Course Overview
 * Train and evaluate a semantic segmentation model to classify every pixel of an image.
 
 
+## Flattening
+
+Suppose we want to use an MLP to classify our image. The problem is, the network takes a 1d array as input, while we have 
+images that are 28x28 matrices. The obvious solution is to flatten the matrix, i.e., to stack all the rows of the matrix 
+in one long 1D vector, as in the image below.
 
 
 
+## Loss Function
+
+The loss function quantifies how far we are from the ideal state where the network does not make any mistakes and has 
+perfect confidence in its answers.
+
+Depending on the task and other considerations we might pick different loss functions. For image classification the most 
+typical loss function is the Categorical Cross-Entropy (CCE) loss, defined as:
+
+
+Definition
+The CCE loss is defined as:
+$$
+\text{CCE} = -\sum_{i=1}^{n_\text{classes}} y_i \log(\hat{p}_i)
+$$
+
+Where:
+
+$n_\text{classes}$ is the number of classes (10 for MNIST digits)
+<br>
+$y_i$ is the true label (ground truth) as a one-hot encoded vector
+<br>
+$\hat{p}_i$ is the predicted probability for class $i$
+
+where:
+
+1. The sum is taken over the classes (10 in our case)
+2. yi is the ground truth, i.e., a one-hot encoded vector(opens in a new tab) of length 10
+3. pi is the probability predicted by the network
+
+
+# Loss Function: Categorical Cross-Entropy (CCE)
+
+In our MNIST digit classification task, we use the Categorical Cross-Entropy (CCE) loss function. This choice is typical for multi-class classification problems where each sample belongs to exactly one class.
+
+## Definition
+
+The CCE loss is defined as:
+
+$$
+\text{CCE} = -\sum_{i=1}^{n_\text{classes}} y_i \log(\hat{p}_i)
+$$
+
+Where:
+- $n_\text{classes}$ is the number of classes (10 for MNIST digits)
+- $y_i$ is the true label (ground truth) as a one-hot encoded vector
+- $\hat{p}_i$ is the predicted probability for class $i$
+
+
+<br>
+
+## Interpretation
+
+1. The loss quantifies the difference between the predicted probability distribution and the true distribution (one-hot encoded ground truth).
+2. A perfect prediction would result in a loss of 0, while incorrect predictions increase the loss value.
+3. The logarithm heavily penalizes confident misclassifications, encouraging the model to be cautious with its predictions.
+
+## Implementation in PyTorch
+
+In PyTorch, we use `nn.CrossEntropyLoss()`, which combines a softmax activation and the CCE loss in one operation, improving numerical stability.
+
+```textmate
+criterion = nn.CrossEntropyLoss()
+```
+
+This loss function is well-suited for our MNIST task because:
+1. It naturally handles multi-class problems.
+2. It encourages the model to output well-calibrated probabilities.
+3. It's differentiable, allowing for effective backpropagation during training.
+
+By minimizing this loss during training, we push our model to make increasingly accurate predictions on the digit classification task.
 
 
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
