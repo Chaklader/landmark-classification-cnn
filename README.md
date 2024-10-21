@@ -1597,6 +1597,59 @@ The main parameters are:
 
 
 
+# Batch Normalization in CNNs
+
+## Introduction
+
+Batch Normalization is a technique used to improve the training of Convolutional Neural Networks (CNNs) by standardizing 
+the inputs to each layer.
+
+## The BatchNorm Equation
+
+$x \leftarrow \frac{x - \mu_x}{\sigma_x} \gamma + \beta$
+
+Where:
+- $x$: activations (values in the feature maps)
+- $\mu_x$: mean of the activations
+- $\sigma_x$: standard deviation of the activations
+- $\gamma$: learnable scaling parameter
+- $\beta$: learnable shifting parameter
+
+## Key Components
+
+1. **Normalization**: $(x - \mu_x) / \sigma_x$
+   - Centers the activations around zero
+   - Scales them to have unit variance
+
+2. **Learnable Parameters**: $\gamma$ and $\beta$
+   - Allow the network to undo normalization if needed
+   - Provide flexibility in learning optimal activation distributions
+
+## Benefits of BatchNorm
+
+1. Reduces internal covariate shift
+2. Allows higher learning rates, accelerating training
+3. Acts as a form of regularization
+4. Reduces the dependence on careful initialization
+
+## Implementation Notes
+
+- Applied after the linear transformation but before the activation function
+- Uses mini-batch statistics during training
+- Uses population statistics during inference
+
+## Considerations
+
+- Batch size affects the stability of BatchNorm
+- May require adjustments in very small batch sizes or online learning scenarios
+
+## Conclusion
+
+Batch Normalization standardizes layer inputs, significantly improving training speed and stability in deep neural networks, 
+especially CNNs.
+
+
+
 ### Batch Normalization
 
 The second modern trick that paves the way for enhancing the performance of a network is called Batch Normalization, or 
@@ -1621,6 +1674,122 @@ During inference we don't have mini-batches. Therefore, the layer uses the mean 
 This means that BatchNorm behaves differently during training and during inference. The behavior changes when we set the 
 model to training mode (using model.train()) or to validation mode (model.eval()).
 
+
+### How BatchNorm Works
+
+Just as we normalize the input image before feeding it to the network, we would like to keep the feature maps normalized, 
+since they are the output of one layer and the input to the next layer. In particular, we want to prevent them to vary 
+wildly during training, because this would require large adjustments of the subsequent layers. Enter BatchNorm. BatchNorm 
+normalizes the activations and keep them much more stable during training, making the training more stable and the convergence 
+faster.
+
+In order to do this, during training BatchNorm needs the mean and the variance for the activations for each mini-batch. 
+This means that the batch size cannot be too small or the estimates for mean and variance will be inaccurate. During training, 
+the BatchNorm layer also keeps a running average of the mean and the variance, to be used during inference.
+
+During inference we don't have mini-batches. Therefore, the layer uses the mean and the variance computed during training 
+(the running averages). This means that BatchNorm behaves differently during training and during inference. The behavior 
+changes when we set the model to training mode (using model.train()) or to validation mode (model.eval()).
+
+
+<br>
+
+![image info](images/bn.png)
+
+<br>
+
+
+### BatchNorm for Convolutional Layers
+
+BatchNorm can be used very easily in PyTorch as part of the convolutional block by adding the nn.BatchNorm2d layer just 
+after the convolution:
+
+
+```textmate
+self.conv1 = nn.Sequential(
+  nn.Conv2d(3, 16, kernel_size=3, padding=1),
+  nn.BatchNorm2d(16),
+  nn.MaxPool2d(2, 2),
+  nn.ReLU(),
+  nn.Dropout2d(0.2)
+)
+```
+
+
+The only parameter is the number of input feature maps, which of course must be equal to the output channels of the convolutional 
+layer immediately before it. NOTE: It is important to use BatchNorm before DropOut. The latter drops some connections only at 
+training time, so placing it before BatchNorm would cause the distribution seen by BatchNorm to be different between training 
+and inference.
+
+### BatchNorm for Dense Layers
+
+We can add BatchNorm to MLPs very easily by using nn.BatchNorm1d:
+
+```textmate
+self.mlp = nn.Sequential(
+  nn.Linear(1024, 500),
+  nn.BatchNorm1d(500),
+  nn.ReLU(),
+  nn.Dropout(0.5)
+)
+```
+
+
+### Optimizing the Performance of Our Network
+
+
+<br>
+
+![image info](images/hp1.png)
+
+<br>
+
+<br>
+
+![image info](images/hp2.png)
+
+<br>
+
+
+Important Terms in Optimizing Performance
+
+Parameter
+
+1. Internal to the model
+2. May vary during training
+3. Examples: Weights and biases of a network
+
+
+Hyperparameter
+
+1. External to the model
+2. Fixed during training
+3. Examples: Learning rate, number of layers, activation layers
+
+
+Experiment
+
+1. A specific training run with a fixed set of hyperparameters
+2. Practitioners typically perform many experiments varying the hyperparameters. Each experiment produces one or more 
+   metrics that can be used to select the best-performing set of hyperparameters (see the next section).
+
+
+### Strategies for Optimizing Hyperparameters
+
+Grid search
+1. Divide the parameter space in a regular grid
+2. Execute one experiment for each point in the grid
+3. Simple, but wasteful
+
+Random search
+
+1. Divide the parameter space in a random grid
+2. Execute one experiment for each point in the grid
+3. Much more efficient sampling of the hyperparameter space with respect to grid search
+
+Bayesian Optimization
+Algorithm for searching the hyperparameter space using a Gaussian Process model
+Efficiently samples the hyperparameter space using minimal experiments
 
 
 
