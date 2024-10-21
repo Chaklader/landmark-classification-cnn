@@ -2195,6 +2195,43 @@ print(f"Prediction: {learn_inf.class_names[max_idx]}")
 ```
 
 
+### Glossary
+
+
+Stride: Amount by which a filter slides over an image.
+
+Padding: Adding pixels at the border of an image in order to increase the width and/or the height to the desired size. 
+These new pixels can be filled with a constant value (typically zero) or with other strategies based on the content of 
+the original image.
+
+Average Pooling: The operation of sliding a window over the input image or a feature map and finding the mean average of 
+the numbers present in that window.
+
+Backbone: The initial part of a CNN, usually comprised of convolutional layers and pooling layers (and optionally BatchNorm 
+and DropOut layers). It usually ends with a flattening of the last feature maps in a vector.
+
+Head: Takes the output of the backbone (usually a flattened vector) and uses it to perform the classification. It is usually 
+a Multi-Layer Perceptron or a similar achitecture mainly constituted of fully-connected layers.
+
+Feature Vector: The output of a typical CNN backbone. It is an array containing the features extracted by the backbone, 
+flattened into a 1d array (a vector).
+
+Embedding An alternative name for the Feature Vector.
+
+Image augmentation: Artificially creates variations on the training images by applying one or more transformations. It 
+makes the model more robust and less prone to overfitting
+
+Batch Normalization (BatchNorm): A layer that renormalizes the activations coming from a layer to decouple layers from 
+each other during training. It makes training deep neural network easier and faster.
+
+Learning rate scheduler: A method for changing the learning rate as the training progresses.
+
+Transformation: A single operation that is applied to an image, usually during image augmentation. For example, transformations 
+can produce rotations, translations, color changes and so on.
+
+Weight initialization: A process that sets initial values for the parameters of a network.
+
+
 
 
 
