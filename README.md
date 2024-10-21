@@ -1793,6 +1793,151 @@ Efficiently samples the hyperparameter space using minimal experiments
 
 
 
+Summary: Most Important Hyperparameters
+
+
+Optimizing hyperparameters can be confusing at the beginning, so we provide you with some rules of thumb about the actions 
+that typically matter the most. They are described in order of importance below. These are not strict rules, but should 
+help you get started:
+
+1. Design parameters: When you are designing an architecture from scratch, the number of hidden layers, as well as the layers 
+   parameters (number of filters, width and so on) are going to be important.
+
+2. Learning rate: Once the architecture is fixed, this is typically the most important parameter to optimize. The next video 
+   will focus on this.
+
+3. Batch size: This is typically the most influential hyperparameter after the learning rate. A good starting point, especially 
+   if you are using BatchNorm, is to use the maximum batch size that fits in the GPU you are using. Then you vary that value and 
+   see if that improves the performances.
+
+4. Regularization: Once you optimized the learning rate and batch size, you can focus on the regularization, especially 
+   if you are seeing signs of overfitting or underfitting.
+
+5. Optimizers: Finally, you can also fiddle with the other parameters of the optimizers. Depending on the optimizers, these 
+   vary. Refer to the documentation and the relevant papers linked there to discover what these parameters are.
+
+
+
+### Summary: Optimizing Learning Rate
+
+The learning rate is one of the most important hyperparameters. However, knowing what the optimal value is, or even what 
+a good range is, can be challenging.
+
+One useful tool to discover a good starting point for the learning rate is the so-called "learning rate finder." It scans 
+different values of the learning rate, and computes the loss obtained by doing a forward pass of a mini-batch using that 
+learning rate. Then, we can plot the loss vs. the learning rate and obtain a plot similar to this:
+
+
+
+<br>
+
+![image info](images/learning_rate.png)
+
+<br>
+
+
+
+### Learning Rate Schedulers
+
+In many cases we want to vary the learning rate as the training progresses. At the beginning of the training we want to 
+make pretty large steps because we are very far from the optimum. However, as we approach the minimum of the loss, we 
+need to make sure we do not jump over the minimum.
+
+For this reason, it is often a good idea to use a learning rate scheduler, i.e., a class that changes the learning rate as 
+the training progresses.
+
+There are several possible learning rate schedulers. You can find the available ones in the PyTorch learning rate schedulers 
+documentation(opens in a new tab).
+
+One of the simplest one is the StepLR scheduler. It reduces the learning rate by a specific factor every n epochs. It can 
+be used as follows:
+
+
+```textmate
+from torch.optim.lr_scheduler import StepLR
+
+scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
+
+# Training loop
+for ... 
+    ...
+    # Update the weights
+    optimizer.step()
+
+    # Update the learning rate in the
+    # optimizer according to the schedule
+    scheduler.step()
+```
+
+
+
+### Tracking Your Experiments
+
+When you are performing hyperparameter optimization and other changes it is very important that you track all of your experiments. 
+This way you will know which hyperparameters have given you which results, and you will be able to repeat those experiments, choose 
+the best one, understand what works and what doesn't, and what you need to explore further. You will also be able to present all 
+your results to other people.
+
+You can of course use spreadsheets for this, or even pen and paper, but there are definitely much better ways!
+
+Enter experiment tracking tools. There are many of them out there, and they all work in similar ways. Let's consider mlflow(opens 
+in a new tab), which is free and open source.
+
+Tracking an experiment is easy in mlflow. You first start by creating a run. A run is a unit of execution that will contain 
+your results. Think of it as one row in a hypothetical spreadsheet, where the columns are the things you want to track (accuracy, 
+validation loss, ...). A run can be created like this:
+
+```textmate
+with mlflow.start_run():
+  ... your code here ...
+```
+
+Once you have created the run, you can use mlflow.log_param to log a parameter (i.e., one of the hyperparameters for example) 
+and mlflow.log_metric to log a result (for example the final accuracy of your model). For example, let's assume that our only 
+hyperparameters are the learning rate and the batch size. We can track their values as well as the results obtained when using 
+those values like this:
+
+
+```textmate
+import mlflow
+
+with mlflow.start_run():
+
+        ... train and validate ...
+
+    # Track values for hyperparameters    
+    mlflow.log_param("learning_rate", learning_rate)
+    mlflow.log_param("batch_size", batch_size)
+
+    # Track results obtained with those values
+    mlflow.log_metric("val_loss", val_loss)
+    mlflow.log_metric("val_accuracy", val_accuracy)
+
+    # Track artifacts (i.e. files produced by our experiment)
+    # For example, we can save the weights for the epoch with the
+    # lowest validation loss
+    mlflow.log_artifact("best_valid.pt")
+```
+
+
+If we do this for all of our experiments, then mlflow will allow us to easily study the results and understand what works 
+and what doesn't. It provides a UI that looks like this:
+
+But you can also look at the results in a notebook by doing:
+
+```textmate
+runs = mlflow.search_runs()
+```
+
+runs is a pandas DataFrame that you can use to look at your results.
+
+We barely scratched the surface about what a tracking tool like mlflow can do for you. For example, they track the code 
+that runs in your experiment so you can reproduce it even if you changed the code in the meantime. If you are looking to 
+apply what you are learning in this course in a professional environment, have a good look at tracking tools and how they 
+can benefit you.
+
+
+
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 ### Transformers 
