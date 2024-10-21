@@ -1938,6 +1938,266 @@ can benefit you.
 
 
 
+Question 1 of 5:
+Which of the following are hyperparameters and which are parameters?
+
+Answer:
+- Learning rate: Hyper-parameter
+- Weights: Parameter
+- Biases: Parameter
+- Number of layers: Hyper-parameter
+- Size of the kernel in a convolutional layer: Hyper-parameter
+- Alpha and beta in a BatchNorm layer: Parameter
+
+Explanation: Hyperparameters are set before training and control the learning process, while parameters are learned during training. Learning rate, number of layers, and kernel size are set before training, making them hyperparameters. Weights, biases, and BatchNorm parameters (alpha and beta) are learned during training, making them parameters.
+
+Question 2 of 5:
+What are some techniques to improve the performance of a CNN? (may be more than one answer)
+
+Answer: All options are correct techniques to improve CNN performance.
+- Image augmentations
+- Hyperparameter tuning
+- Use a learning rate scheduler
+
+Explanation: These are all valid techniques to enhance CNN performance. Image augmentation increases dataset variety, hyperparameter tuning optimizes model settings, tracking experiments helps in identifying best practices, larger networks can capture more complex patterns, longer training allows for better convergence, and learning rate schedulers can help in finding optimal learning rates during training.
+
+Question 3 of 5:
+What is the role of the BatchNorm layer in modern CNNs? Select all that apply.
+
+Answer:
+- Standardize the activations of a layer to prevent covariate shift
+- Allow for faster training and larger learning rates
+- Makes the layers more independent from each other, making the work of the optimizer much easier
+
+Explanation: BatchNorm standardizes layer activations, which helps prevent covariate shift. This standardization allows for faster training and the use of larger learning rates. It also makes layers more independent, simplifying the optimizer's job. These effects collectively contribute to improving the network's accuracy. The option "Decrease the input size by 2" is incorrect as BatchNorm doesn't change input dimensions.
+
+Question 4 of 5:
+Which one is a sensible choice for the learning rate:
+
+Answer: 0.005 (5e-3)
+
+Explanation: Looking at the learning rate vs loss graph, we see that the lowest point of the loss curve corresponds to a learning rate of about 10^-2 to 10^-1. The option 0.005 (5e-3) is closest to this optimal range. 0.1 is too high (loss increases), and 0.00001 (1e-5) is too low (loss plateaus).
+
+Question 5 of 5:
+Please rank the hyperparameters in order of importance
+
+Answer: The exact ranking can vary, but a common order of importance would be:
+1. Architecture design (number of layers, kernel size for convolution...)
+2. Learning rate
+3. Batch size
+4. Regularization (Dropout, weight decay...)
+
+Explanation: Architecture design is typically most crucial as it determines the model's capacity. Learning rate is next as it greatly affects training dynamics. Regularization techniques help prevent overfitting. Batch size, while important, often has less impact compared to the others. However, the relative importance can vary depending on the specific problem and dataset.
+
+
+
+### Weight Initialization
+
+Weight initialization is a procedure that happens only once, before we start training our neural network. Stochastic Gradient 
+Descent and other similar algorithms for minimization are iterative in nature. They start from some values for the parameters 
+that are being optimized and they change those parameters to achieve the minimum in the objective function (the loss).
+
+These "initial values" for the parameters are set through weight initialization.
+
+Before the introduction of BatchNorm, weight initialization was really key to obtaining robust performances. In this previous 
+era, a good weight initialization strategy could make the difference between an outstanding model and one that could not train 
+at all. These days networks are much more forgiving. However, a good weight initialization can speed up your training and also 
+give you a bit of additional performance.
+
+In general, weights are initialized with random numbers close but not equal to zero, not too big but not too small either. 
+This makes the gradient of the weights in the initial phases of training neither too big nor too small, which promotes fast 
+training and good performances. Failing to initialize the weights well could result in vanishing or exploding gradients(opens 
+in a new tab), and the training would slow down or stop altogether.
+
+
+
+Wrap Your Model for Inference
+
+Exporting a model for production means packaging your model in a stand-alone format that can be transferred and used to 
+perform inference in a production environment, such as an API or a website.
+
+Production-Ready Preprocessing
+
+Remember that the images need some preprocessing before being fed to the CNN. For example, typically you need to resize, 
+center crop, and normalize the image with a transform pipeline similar to this:
+
+
+```textmate
+testval_transforms = T.Compose(
+    [
+        # The size here depends on your application. Here let's use 256x256
+        T.Resize(256),
+        # Let's take the central 224x224 part of the image
+        T.CenterCrop(224),
+        T.ToTensor(),
+        T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ]
+)
+```
+
+
+Obviously, if you do not do these operations in production the performance of your model is going to suffer greatly. The 
+best course of action is to make these transformations part of your standalone package instead of re-implementing them in 
+the production environment. Let's see how.
+
+We need to wrap our model in a wrapper class that is going to take care of applying the transformations and then run the 
+transformed image through the CNN. If we trained with the nn.CrossEntropyLoss as the loss function, we also need to apply 
+a softmax function to the output of the model so that the output of the wrapper will be probabilities and not merely scores.
+
+Let's see an example of such a wrapper class:
+
+```textmate
+import torch
+from torchvision import datasets
+import torchvision.transforms as T
+from __future__ import annotations
+
+class Predictor(nn.Module):
+
+    def __init__(
+      self, 
+      model: nn.Module, 
+      class_names: list[str], 
+      mean: torch.Tensor, 
+      std: torch.Tensor
+    ):
+
+        super().__init__()
+
+        self.model = model.eval()
+        self.class_names = class_names
+
+        self.transforms = nn.Sequential(
+            T.Resize([256, ]),
+            T.CenterCrop(224),
+            T.ConvertImageDtype(torch.float),
+            T.Normalize(mean.tolist(), std.tolist())
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            # 1. apply transforms
+            x = self.transforms(x)  # =
+            # 2. get the logits
+            x = self.model(x)  # =
+            # 3. apply softmax
+            #    HINT: remmeber to apply softmax across dim=1
+            x = F.softmax(x, dim=1)  # =
+
+            return x
+```
+
+The Constructor
+
+Let's first look at the constructor __init__: we first set the model to eval mode, and we also save the class names. This 
+will be useful in production: the wrapper will return the probability for each class, so if we take the maximum of that 
+probability and take the corresponding element from the class_names list, we can return the winning label.
+
+Then we have this:
+
+```textmate
+self.transforms = nn.Sequential(
+            T.Resize([256, ]),  # We use single int value inside a list due to torchscript type restrictions
+            T.CenterCrop(224),
+            T.ConvertImageDtype(torch.float),
+            T.Normalize(mean.tolist(), std.tolist())
+        )
+```
+
+
+This defines the transformations we want to apply. It looks very similar to the transform validation pipeline, with a few 
+important differences:
+
+1. We do not use nn.Compose but nn.Sequential. Indeed the former is not supported by torch.script (the export functionality 
+   of PyTorch).
+2. In Resize the size specification must be a tuple or a list, and not a scalar as we were able to do during training.
+3. There is no ToTensor. Instead, we use T.ConvertImageDtype. Indeed, in this context the input to the forward method is 
+   going to be already a Tensor
+
+
+The forward Method
+
+Let's now look at the forward method:
+
+```textmate
+def forward(self, x: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            # 1. apply transforms
+            x = self.transforms(x)  # =
+            # 2. get the logits
+            x = self.model(x)  # =
+            # 3. apply softmax
+            #    HINT: remmeber to apply softmax across dim=1
+            x = F.softmax(x, dim=1)  # =
+
+            return x
+```
+
+We declare we are not going to need gradients with the torch.no_grad context manager. Then, as promised, we first apply 
+the transforms, then we pass the result through the model, and finally we apply the softmax function to transform the scores 
+into probabilities.
+
+
+Export Using torchscript
+
+We can now create an instance of our Predictor wrapper and save it to file using torch.script:
+
+
+```textmate
+predictor = Predictor(model, class_names, mean, std).cpu()
+
+# Export using torch.jit.script
+scripted_predictor = torch.jit.script(predictor)
+scripted_predictor.save("standalone_model.pt")
+```
+
+Note that we move the Predictor instance to the CPU before exporting it. When reloading the model, the model will be loaded 
+on the device it was taken from. So if we want to do inference on the CPU, we need to first move the model there. In many 
+cases CPUs are enough for inference, and they are much cheaper than GPUs.
+
+We then use torch.jit.script which converts our wrapped model into an intermediate format that can be saved to disk (which 
+we do immediately after).
+
+Now, in a different process or a different computer altogether, we can do:
+
+
+```textmate
+import torch
+
+predictor_reloaded = torch.jit.load("standalone_model.pt")
+```
+
+This will recreate our wrapped model. We can then use it as follows:
+
+```textmate
+from PIL import Image
+import torch
+import torchvision
+import torchvision.transforms as T
+
+# Reload the model
+learn_inf = torch.jit.load("standalone_model.pt")
+
+# Read an image and transform it to tensor to simulate what would
+# happen in production
+img = Image.open("static_images/test/09.Golden_Gate_Bridge/190f3bae17c32c37.jpg")
+# We use .unsqueeze because the model expects a batch, so this
+# creates a batch of 1 element
+pil_to_tensor = T.ToTensor()(img).unsqueeze_(0)
+
+# Perform inference and get the softmax vector
+softmax = predictor_reloaded(pil_to_tensor).squeeze()
+# Get index of the winning label
+max_idx = softmax.argmax()
+# Print winning label using the class_names attribute of the 
+# model wrapper
+print(f"Prediction: {learn_inf.class_names[max_idx]}")
+```
+
+
+
+
+
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 ### Transformers 
