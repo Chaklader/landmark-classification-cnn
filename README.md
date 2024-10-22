@@ -2233,9 +2233,705 @@ Weight initialization: A process that sets initial values for the parameters of 
 
 
 
+### Introduction to Transfer Learning
 
+
+### Innovative CNN Architectures
+
+### AlexNet, VGG and an Introduction to ResNet
+
+
+### AlexNet
+
+The first CNN architecture to use the ReLU activation function. AlexNet also used DropOut to prevent overfitting. It has 
+the structure of a classical CNN, with a backbone made of convolution and Max Pooling followed by a flattening and a 
+Multi-Layer Perceptron.
+
+
+### VGG
+
+This architecture was designed by the Visual Geometry Group at Oxford. There are two versions, VGG16 and VGG19, with 16 and 
+19 layers respectively. The designers pioneered the use of many 3 by 3 convolutions instead of fewer larger kernels (for 
+example, the first layer of AlexNet uses a 11 by 11 convolution). Most CNNs up to today still use the same strategy. Apart 
+from that, VGG has an elegant and regular architecture made of convolutional layers followed by Max Pooling layers. The 
+height and width of the feature maps decreases as we go deeper into the network, thanks to the Max Pooling layers, but the 
+number of feature maps increases. The backbone is then followed by a flattening operation and a regular head made of a 
+Multi-Layer Perceptron.
+
+
+# ResNet (Residual Networks)
+
+## I. Introduction to ResNet
+
+ResNet (Residual Network) is a groundbreaking CNN architecture that introduced skip connections to solve the degradation 
+problem in deep networks.
+
+## II. The Degradation Problem
+
+Traditional deep networks faced two major issues:
+1. Performance degradation with increasing depth
+2. Vanishing gradient problem
+
+## III. Skip Connections
+
+The fundamental innovation of ResNet is the skip connection, which can be expressed as:
+
+$H(x) = F(x) + x$
+
+Where:
+- $H(x)$ is the desired underlying mapping
+- $F(x)$ is the residual mapping to be learned
+- $x$ is the identity mapping (skip connection)
+
+## IV. Mathematical Framework
+
+### 1. Residual Block Formula
+$y = F(x, \{W_i\}) + x$
+
+Where:
+- $y$ is the output
+- $F(x, \{W_i\})$ represents residual mapping
+- $\{W_i\}$ are the weights
+- $x$ is the identity shortcut connection
+
+### 2. Dimension Matching
+When dimensions don't match:
+$y = F(x, \{W_i\}) + W_sx$
+
+Where $W_s$ is a linear projection to match dimensions
+
+## V. Identity Mapping
+
+The network can easily learn the identity function by setting:
+$F(x, \{W_i\}) = 0$
+
+This results in:
+$H(x) = 0 + x = x$
+
+## VI. Implementation in PyTorch
+
+```textmate
+class ResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1):
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, 
+                              kernel_size=3, stride=stride, padding=1)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, 
+                              kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        
+        # Skip connection with dimension matching if needed
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 
+                         kernel_size=1, stride=stride),
+                nn.BatchNorm2d(out_channels)
+            )
+
+    def forward(self, x):
+        residual = x
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(residual)
+        out = F.relu(out)
+        return out
+```
+
+## VII. Advantages
+
+1. Solves vanishing gradient problem
+2. Enables training of very deep networks (100+ layers)
+3. Better gradient flow through the network
+4. Easier optimization
+5. Improved performance without adding significant parameters
+
+## VIII. Key Benefits
+
+1. Computational efficiency:
+   - $\frac{\partial \mathcal{L}}{\partial x} = \frac{\partial \mathcal{L}}{\partial H} \cdot (1 + \frac{\partial F}{\partial x})$
+
+2. Training stability:
+   - Gradient can always flow through identity connection
+   - Easier backpropagation
+
+## IX. Practical Considerations
+
+1. Building blocks typically contain:
+   - Two 3×3 conv layers
+   - BatchNorm after each conv layer
+   - ReLU activation
+   - Skip connection
+
+2. Common architectures:
+   - ResNet-18
+   - ResNet-34
+   - ResNet-50
+   - ResNet-101
+   - ResNet-152
+
+This architecture has become a fundamental building block in modern deep learning, enabling the development of much deeper 
+and more powerful networks.
+
+
+### ResNet (Udacity Note)
+
+ResNet is a very important architecture that introduced a fundamental innovation: the skip connection.
+
+Before ResNet, deep learning models could not go very deep in terms of number of layers. Indeed, after a certain point, 
+going deeper was hurting performances instead of helping them.
+
+This pointed to problems in the optimization algorithm, because a deeper network should have at worst an identical performance 
+to a shallower network. Indeed, the optimizer could transform the additional layers into the identity function and recover 
+the shallower network exactly.
+
+The fact that this does not happen means that the optimizer has a hard time transforming the last layers in the identity 
+function, and so it converges to a suboptimal solution that makes the second network WORSE than the first. This is largely 
+due to the so-called vanishing gradient(opens in a new tab) problem.
+
+How does ResNet solve this problem? By starting very close to the identity function, using the skip connection:
+
+In the ResNet block we have two convolutional layers with a ReLU in the middle. The output of these two layers is summed 
+to the input tensor x and then another ReLU is applied on the result.
+
+This means that the central part comprising the two layers with the ReLU in the middle is learning the residual, from which 
+comes the name Residual Network, or ResNet for short.
+
+It is easy to see how this block can become the identity function: it is sufficient to put the weights of the kernel of 
+the first or the second convolutional layer to zero (or very close to zero). This will produce a feature map after the 
+two convolutional layers where each pixel is zero. This is then summed to x, which means our block behaves as the identity 
+function because H(x) = x.
+
+With this simple trick we can now go very deep (up to hundreds of layers) and increase significantly the performance of the 
+network.
+
+We can implement the ResNet block in PyTorch as follows:
+
+
+```textmate
+class ResidualBlock(nn.Module):
+    def __init__(self, inp, out1, out2):
+        super().__init__()
+
+        self.conv_block = nn.Sequential(
+            nn.Conv2d(inp, out1, 3),
+            nn.ReLU(),
+            nn.Conv2d(out1, out2, 3)
+        )
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        # F(x)
+        F = self.conv_block(x)
+        # IMPORTANT BIT: we sum the result of the
+        # convolutions to the input image
+        H = F + x
+        # Now we apply ReLU and return
+        return self.relu(H)
+```
+
+### Fixed Input Size and Global Average Pooling (GAP)
+
+Size of the Input Image for CNNs
+
+A classic CNN has a first section comprised of several layers of convolutions and pooling, followed by a flattening and 
+then one or more fully-connected layers.
+
+Convolutional and pooling layers can handle any input size (they will just produce outputs of different size depending on 
+the input size). However, fully-connected layers can only work with an input array of a specific size. Therefore, the vector 
+produced by the flattening operation must have a specific number of elements, because it feeds into the fully-connected 
+layers.
+
+Let's call this number of elements H. This means that the feature maps that are being flattened must have a specific size, 
+so that n_channels x height x width = H. Since the height and width of the last feature maps are determined by the size of 
+the input image, as it flows through the convolutional and the pooling layers, this constraint on the vector produced by 
+the flattening operation translates to a constraint on the size of the input image. Therefore, for CNNs using flattening 
+layers, the input size must be decided a priori when designing the architecture.
+
+### Global Average Pooling (GAP) Layer
+
+We can now introduce a new pooling layer that is widely used in modern CNNs. This type of pooling is equivalent to average 
+pooling, but the average is taken over the entire feature map. It is equivalent to an Average Pooling Layer with the window 
+size equal to the input size.
+
+This layer becomes very interesting because it can be used in place of the flattening operation at the end of the convolutional 
+part of a CNN. Instead of taking the last feature maps and flattening them into a long vector, we take the average of each 
+feature map and place them in a much shorter vector:
+
+
+<br>
+
+![image info](images/global.png)
+
+<br>
+
+
+This drastically reduces the dimensionality of the resulting vector, from n_channels x height x width to just n_channels. 
+But also, more importantly, it makes the network adaptable to any input size! Let's see how.
+
+If we use the GAP layer instead of flattening, we are going to obtain a vector of constant size independent of the size 
+of the input image, because the size of the vector after the GAP layer is given by the number of feature maps in the last 
+convolutional layer, and it is not influenced by their height and width. Therefore, the input image can have any size 
+because this will not influence the number of feature maps, but only their height and width.
+
+Note however that a network with GAP trained on a certain image size will not respond well to drastically different image 
+sizes, even though it will output a result. So effectively the input size became a tunable parameter that can be changed 
+without affecting the architecture of the CNN. Many modern architectures adopt the GAP layer.
+
+
+## Attention
+
+The concept of attention is a very important concept in modern neural networks. It is a simple idea: the network should 
+learn to boost some information that is helpful for a given example, and decrease the importance of information that is 
+not useful for that example.
+
+There are several forms of attention. Let's look at two important ones.
+
+#### Channel Attention: Squeeze and Excitation
+
+
+<br>
+
+![image info](images/squeeze.png)
+
+<br>
+
+The term "channel" can refer to the channels in the input image (3 channels if RGB) but also to the number of feature maps 
+are output from a layer.
+
+Channel attention is a mechanism that a network can use to learn to pay more attention (i.e., to boost) feature maps that 
+are useful for a specific example, and pay less attention to the others.
+
+This is accomplished by adding a sub-network that given the feature maps/channels assigns a scale to each input feature map. 
+The feature maps with the largest scale are boosted:
+
+
+<br>
+
+![image info](images/attention.png)
+
+<br>
+
+
+### Brief Introduction to Transformers in Computer Vision
+
+Vision Transformers have been recently introduced, and are becoming more and more important for computer vision. They contain 
+another form of attention, called self attention.
+
+
+### Brief Notes on Vision Transformers
+
+Transformers are a family of neural networks originally developed for Natural Language Processing (NLP) applications. They 
+are very good at modeling sequences, such as words in a sentence. They have been extended to deal with images by transforming 
+images to sequences. In short, the image is divided in patches, the patches are transformed into embedded representations, 
+and these representations are fed to a Transformer that treats them as a sequence.
+
+Transformers are characterized by the self-attention mechanism. Just like channel attention allows the network to learn to 
+focus more on some channels, self attention allows the network to learn how to pay attention to the relationship between 
+different words in a sentence or parts of an image.
+
+While CNNs build large Effective Receptive Fields by using many layers, vision Transformers show large receptive fields 
+earlier and more consistently throughout the network.
+
+
+### State of the Art Computer Vision Models
+
+Vision Transformers have state-of-the-art performances in many academic computer vision tasks. CNNs are, however, still by 
+far the most widely-used models for real-world computer vision applications.
+
+Transformers are very powerful but they need a lot more data than CNNs, and they are typically slower and more computationally 
+expensive. CNNs are more data-efficient because they are built around two baked-in assumptions: local connectivity, which 
+dictates that pixels close to each other are related (by using small kernels); and weight sharing, which dictates that 
+different portions of an image must be processed identically (by sliding the same convolutional kernel across the entire 
+image). Transformers are much more general, and they do not impose these assumptions. Therefore, they are more adaptable, 
+but need more data to learn these characteristics of many images.
+
+There are also architectures that are hybrids of CNNs and Transformers, which try to create the best combination of both, 
+aiming to be data-efficient but more powerful than pure CNNs.
+
+Summarizing, there are currently 3 categories of computer vision models:
+
+Pure CNN architectures - still widely used for the majority of real-world applications. Examples: EfficientNet V2(opens 
+in a new tab), ConvNeXt(opens in a new tab) Pure Vision Transformers - currently widely used in academic environments and 
+in large-scale real-world applications. Examples: ViT(opens in a new tab), Swin V2(opens in a new tab) Hybrid architectures 
+that mix elements of CNNs with elements of Transformers. Example: CoatNet(opens in a new tab) As a final note, Transformers 
+are now becoming even more important because they form the basis for multi-modal models - models that deal with, for example, 
+image and text simultaneously. Examples of these are Open AI's CLIP(opens in a new tab) and Google's ImageGen(opens in a new tab).
+
+
+Question 1 of 3:
+Match the architecture with its main innovation/characteristic.
+- Vision Transformers, AlexNet, ResNet, EfficientNet, VGG
+
+Answer:
+- AlexNet: First CNN to win ImageNet
+- VGG: Small conv. kernels, increase channel count while decreasing height and width
+- ResNet: Skip connection
+- EfficientNet: Squeeze-and-excitation block (aka channel attention)
+- Vision Transformers: Self-attention
+
+Explanation:
+- AlexNet (2012) was groundbreaking as the first CNN to win the ImageNet competition, marking the beginning of deep learning 
+  dominance in computer vision.
+- VGG popularized using small (3x3) convolutional kernels in deep architectures while progressively increasing channels 
+  and decreasing spatial dimensions.
+- ResNet introduced skip connections to solve the degradation problem in very deep networks.
+- EfficientNet utilized squeeze-and-excitation blocks for channel attention, improving efficiency.
+- Vision Transformers brought self-attention mechanisms from NLP to computer vision.
+
+Question 2 of 3:
+What is the role of the skip connection during a forward pass?
+
+Answer: Makes it possible for a layer to easily learn the identity function, and forces the layer to learn the residuals 
+with respect to the input image.
+
+Explanation:
+Skip connections allow the network to bypass layers by adding the input directly to the layer's output. This makes it 
+easier for the network to learn the identity mapping when needed, as it only needs to learn the residual (difference) 
+between the input and desired output. This helps solve the degradation problem in deep networks and allows for better 
+gradient flow during training.
+
+Question 3 of 3:
+Match each attention type with its definition.
+
+Answer:
+- Self-attention: Learns the relationship of each patch of the image with every other patch
+- Squeeze-and-excitation: Computes a scale factor for each input feature map and then multiply each feature map by its 
+  scale factor, boosting important feature maps
+
+Explanation:
+- Self-attention allows each part of the input to interact with all other parts, enabling global context understanding. 
+  Used extensively in Vision Transformers.
+- Squeeze-and-excitation learns to weight different channels/feature maps based on their importance, effectively implementing 
+  channel-wise attention. This helps the network focus on the most relevant features for the task at hand.
+
+
+### Transfer Learning
+
+
+Transfer learning is a technique that allows us to re-use what a network has learned on one dataset to learn about a 
+different dataset. While training from scratch requires large datasets and a lot of resources, transfer learning can be 
+applied successfully on much smaller datasets without the need for large computational resources.
+
+
+A normal CNN extracts more and more abstract features the deeper you go in the network. This means that the initial layers, 
+which extract elementary features such as edges and colors, are probably pretty general and can be applied similarly on many 
+different datasets. Instead, the last layers (especially the fully-connected layers) are highly specialized in the task 
+they have been trained on.
+
+Accordingly, in transfer learning we keep the initial layers (that are pretty universal) unchanged or almost unchanged, 
+while we change the last layers that must be specialized by task.
+
+How many layers we keep or modify slightly, and how many layers we change dramatically or even replace, depends on how 
+similar our dataset is to the original dataset and on how much data we have.
+
+So essentially the transfer-learning workflow consists of taking a pre-trained model, freezing some of the initial layers 
+and freeing or substituting some late layers, then training on our dataset.
+
+Getting a Pre-Trained Model with torchvision
+You can find the list of all models supported by torchvision in the official documentation(opens in a new tab) (note that 
+new models are added with each new version, so check that the list you are consulting is appropriate for the version of 
+PyTorch you are using). Then you can load models by name. For example, let's load a resnet architecture:
+
+import torchvision.models
+
+model = torchvision.models.resnet18(pretrained=True)
+The pretrained=True option indicates that we want the weights obtained after training on ImageNet or some other dataset. 
+If we set pretrained=False we get the model initialized with the default initialization, ready to be trained from scratch.
+
+Freezing and Thawing Layers and Parameters
+A frozen parameter is a parameter that is not allowed to vary during training. In other words, backpropagation will ignore 
+that parameter and won't change its value nor compute the gradient of the loss with respect to that parameter.
+
+In PyTorch you can freeze all the parameters of a network using the following code:
+
+```textmate
+for param in model.parameters():
+    param.requires_grad = False
+```
+
+
+Similarly, you can also freeze the parameters of a single layer. For example, say that this layer is called fc, then:
+
+```textmate
+for param in model.fc.parameters():
+  param.requires_grad = False
+```
+
+
+You can instead thaw parameters that are frozen by setting requires_grad to True.
+
+### BatchNorm
+
+The BatchNorm layer is a special case: it has two parameters (gamma and beta), but it also has two buffers that are used 
+to accumulate the mean and standard deviation of the dataset during training. If you only use requires_grad=False then 
+you are only fixing gamma and beta. The statistics about the dataset are still accumulated. Sometimes fixing those as 
+well can help the performance, but not always. Experimentation, as usual, is key.
+
+If we want to also freeze the statistics accumulated we need to put the entire layer in evaluation mode by using eval 
+(instead of requires_grad=False for its parameters):
+
+```textmate
+model.bn.eval()
+```
+
+Note that this is different than using model.eval() (which would put the entire model in evaluation mode). You can invert 
+this operation by putting the BatchNorm layer back into training mode: model.bn.train().
+
+Understanding the Architecture We Are Using
+When doing transfer learning, in many cases you need to know the layout of the architecture you are using so you can decide 
+what to freeze or not to freeze. In particular, you often need either the name or the position of a specific layer in the 
+network.
+
+As usual, we do not encourage the use of print(model) as the output there does NOT necessarily correspond to the execution 
+path coded in the forward method. Instead, use the documentation of the model or export the model and visualize it with 
+Netron(opens in a new tab) as explained in the next subsection.
+
+Visualizing an Architecture with Netron
+Netron is a web app, so you do not need to install anything locally. First we need to export the model:
+
+
+```textmate
+# Fake image needed for torch.jit.trace
+# (adjust the size of the image from 224x224 to what the
+# network expects if needed)
+random_image = torch.rand((1, 3, 224, 224))
+
+scripted = torch.jit.trace(model, random_image)
+torch.jit.save(scripted, "my_network.pt")
+```
+
+Then we can go to Netron(opens in a new tab) and load this file. Once the architecture has been loaded, press Crtl+U to 
+visualize the name of each layer. For example, this is the last part of a ResNet architecture:
+
+
+
+Transfer learning involves taking a pre-trained neural network trained on a source dataset (for example, Imagenet) and adapting it to a new, different dataset, typically a custom dataset for a specific problem.
+
+There are different types of transfer learning and different strategies that you can use depending on:
+
+The size of your dataset
+How similar your dataset is to the original dataset that the network was trained on (e.g., ImageNet)
+We can schematize the different possibilities like this:
+
+
+<br>
+
+![image info](images/fine-tune.png)
+
+<br>
+
+
+Dataset Size
+It is difficult to define what a small dataset or a large dataset is exactly. However, for a typical classification example, a small dataset is in the range of 1000-10,000 images. A large dataset can have 100,000 images or more. These boundaries also change significantly depending on the size of the model you are using. A dataset that is large for a ResNet18 model (a ResNet with 18 layers) could be small for a ResNet150 architecture (a ResNet with 150 layers). The latter has many more parameters and a much larger capacity so it needs more data. In general, the larger the model, the more data it needs.
+
+Dataset Similarity
+Similarly, it is sometimes difficult to judge whether a target dataset is similar to the source dataset. For example, if the source dataset is Imagenet and the target dataset is of natural images, then the two datasets are pretty similar. However, if the target is medical images then the datasets are fairly dissimilar. However, it must be noted that CNNs look at images differently than we do, so sometimes datasets that look different to us are sufficiently similar for the model, and vice-versa. It is important to experiment and verify our assumptions.
+
+Size of Dataset: What to Do
+Small target dataset, similar to the source dataset: Train the head
+This is a typical case, and the case where transfer learning really shines. We can use the pre-trained part of the network to extract meaningful feature vectors and use them to classify our images.
+
+In practice we take the head of the network and we substitute it with one or more new fully-connected layers (with the usual BatchNorm and ReLU layers in-between). Remember that the head of the network is the final part of the network, made typically by an MLP or similar, after the convolution part. It takes the output of the feature extractor part (also called backbone) and uses it to determine the class of the image (in the case of image classification). In some architectures like ResNet the head is just one layer (the last layer); in other architectures it is more complicated, encompassing the last few layers. Of course, the last of these layers needs to have as many output nodes as classes in our problem (or one number in case of regression).
+
+Then we train, keeping all the layers fixed except for the layer(s) we have just added.
+
+For example, let's say we have 1000 images (a small dataset) and a classification task with 10 classes. This is what we could do:
+
+
+```textmate
+import torch.nn as nn
+import torchvision.models
+
+## Get a pre-trained model from torchvision, for example
+## ResNet18
+model = torchvision.models.resnet18(pretrained=True)
+
+## Let's freeze all the parameters in the pre-trained
+## network
+for param in model.parameters():
+    param.requires_grad = False
+
+## Through Netron.app we have discovered that the last layer is called
+## "fc" (for "fully-connected"). Let's find out how many input features
+## it has
+input_features = model.fc.in_features
+## We have 10 classes
+n_classes = 10
+## Let's substitute the existing fully-connected last layer with our
+## own (this will have all its parameters free to vary)
+model.fc = nn.Linear(input_features, n_classes)
+## or we can use a more complicated head (this might or might not
+## lead to improved performances depending on the case)
+model.fc = nn.Sequential(
+    nn.BatchNorm1d(input_features),
+    nn.Linear(input_features, input_features * 2),
+    nn.ReLU(),
+    nn.BatchNorm1d(input_features * 2),
+    nn.Dropout(0.5),
+    nn.Linear(input_features * 2, n_classes)
+)
+```
+
+Now we can train our model as usual. You might want to start by executing the learning rate finder we have seen in our 
+previous exercises and train for a few epochs. Depending on the size of your dataset, you might reach good performances 
+rather quickly. It is likely that you will have to train for much less time than you would if you were to train from 
+scratch. Be careful with overfitting and do not overtrain! If needed, also add more image augmentations, weight decay, 
+and other regularization techniques.
+
+Large dataset, at least somewhat similar to the original dataset: Fine-tune the entire network
+If we have more data and/or the task is not very similar to the task that the network was originally trained to solve, 
+then we are going to get better performances by fine-tuning the entire network.
+
+We start by performing the same procedure as the previous case: we remove the existing head, we freeze everything and we 
+add our own head, then we train for a few epochs. Typically 1 or 2 epochs are sufficient.
+
+We then free all the layers and we train until convergence (until the validation loss stops decreasing). We need to be very 
+careful to use a conservative learning rate, to avoid destroying what the network has learned during the original task. 
+A good choice is typically a value between 2 and 10 times smaller than the learning rate we used to train the head. As 
+usual, experimentation is typically needed to find the best learning rate for this phase.
+
+A more advanced technique that works well in practice is to use a different learning rate for every layer(opens in a new 
+tab). You start with using the maximum learning rate for the last layer and you gradually decrease the learning rate for 
+layers deeper into the network until you reach the minimum for the first convolutional layer.
+
+Large dataset, very different than the original dataset: Train from scratch
+
+In this situation, fine-tuning does not give us better performance or faster training. We are better off just training 
+from scratch. We can still take advantage of good architectures that performed well on ImageNet, since they are likely 
+to work well on our dataset as well. We can just use them without pre-trained weights, for example:
+
+
+```textmate
+import torch.nn as nn
+import torchvision.models
+
+## Get a pre-trained model from torchvision, for example
+## ResNet18
+model = torchvision.models.resnet18(pretrained=False)
+```
+
+
+Small dataset, very different than the original dataset: Gather more data or use semi-supervised learning
+This is the hardest situation. If you have tried fine-tuning just the head and it did not perform well enough, and fine-tuning 
+more layers resulted in overfitting, you probably need to either collect more data or look into starting from scratch and 
+use semi-supervised learning(opens in a new tab)
+
+
+Other situations
+When it is not clear whether you are in any of the situations described above, you can take approaches that are in-between.
+
+For example, when you have a dataset that is not very small but not very large either, you might get good performances 
+by fine-tuning not only the head, but also a few of the last convolutional layers or blocks. Indeed, these layers encode 
+high-level concepts such as "squares," "triangles," or textures, and therefore can improve by being fine-tuned or even 
+trained from scratch on your data. Just free those layers along with the new head and train those, while keeping the rest 
+fixed. Depending once again on the size of your data and the similarity with the original dataset, you can fine-tune these 
+layers or reset them and train them from scratch. As usual, it takes a bit of experimentation to find the best solution.
+
+### TIMM: A Very Useful Library for Fine-Tuning
+
+When performing fine-tuning (or training with a predefined architecture), we cannot avoid mentioning the fantastic PyTorch 
+Image Models (timm) library(opens in a new tab). It contains hundreds of models, many with pre-trained weights, and it keeps 
+getting updated with the very latest architectures from the research community. It is very easy to use it for transfer learning. 
+It is an alternative to torchvision that contains many more pretrained models.
+
+First let's install it with:
+
+```textmate
+pip install timm
+```
+
+Then we can get a pre-trained model with a custom head just by doing:
+
+```textmate
+n_classes = 196
+model = timm.create_model("convnext_small", pretrained=True, num_classes=n_classes)
+```
+
+The library already builds a head for you, so you do not need to build one explicitly.
+
+We can now choose to freeze some or all the layers except the last one, depending on the size of our dataset and its 
+characteristics, and apply the techniques we discussed before. Note that you do not need to know the details of the 
+architecture to be able to make a new head for it, as timm does that for you.
+
+
+Question 1 of 2:
+Consider the following scenario: you have a dataset of around 5000 labeled images of dogs, and you want to classify the 
+different breeds. What is the best strategy to build a model for this dataset?
+
+Answer: Select a pre-made architecture and start from the weights that have been obtained after training it on ImageNet, 
+then fine-tune the classification head.
+
+Explanation:
+- This is the best approach because:
+  1. The dataset is relatively small (5000 images)
+  2. Dog breed classification is similar to tasks in ImageNet
+  3. Pre-trained weights on ImageNet already contain useful features for animal/dog recognition
+  4. Fine-tuning just the classification head is computationally efficient and helps prevent overfitting
+  5. Transfer learning from ImageNet is particularly effective for animal classification tasks
+
+
+Question 2 of 2:
+
+When doing transfer learning, we can consider different strategies based on the dataset size as well as its similarity with 
+the original dataset the architecture was trained on. Can you match the different use cases with the correct strategy?
+
+| Transfer Learning Strategy | Use Case |
+|--------------------------|-----------|
+| Train from scratch | Big dataset, dissimilar |
+| Fine-tune just the head | Small dataset, similar |
+| Fine-tune the head, then fine-tune the rest | Large dataset, somewhat similar |
+| Collect more data | Small dataset, very dissimilar |
+
+## Explanation:
+
+1. **Train from scratch**
+   - When: Big dataset + Dissimilar domain
+   - Why: With large amounts of data that's very different from the pre-trained domain, it's better to learn features specific to your task
+   - Example: Using ImageNet-trained model for medical imaging with millions of samples
+
+2. **Fine-tune just the head**
+   - When: Small dataset + Similar domain
+   - Why: Pre-trained features are already relevant, and limited data means we should avoid overfitting
+   - Example: Using ImageNet model for pet classification with few thousand images
+
+3. **Fine-tune head, then rest**
+   - When: Large dataset + Somewhat similar domain
+   - Why: Enough data to fine-tune more layers, but pre-trained features still provide good starting point
+   - Example: Using ImageNet model for satellite imagery with substantial data
+
+4. **Collect more data**
+   - When: Small dataset + Very dissimilar domain
+   - Why: Neither training from scratch (too little data) nor transfer learning (too different) would work well
+   - Example: Using ImageNet model for radar images with only hundreds of samples
+
+    
+This strategy matrix helps in deciding the best approach based on two key factors:
+2. Dataset size (Small vs. Large)
+2. Domain similarity to pre-trained dataset (Similar vs. Dissimilar)
+
+
+The choice of strategy significantly impacts model performance and training efficiency.
+
+Explanation for each case:
+
+- Small dataset, very dissimilar: Even with dissimilar data, when the dataset is small, it's better to keep most pre-trained 
+  weights to avoid overfitting, only adjusting the head.
+- Small dataset, similar: Perfect case for transfer learning with minimal fine-tuning. The pre-trained features are already 
+  relevant, and the small dataset size suggests minimal adaptation.
+- Large dataset, somewhat similar: With more data, we can afford to fine-tune more layers. The two-step approach (head first, 
+  then rest) helps maintain stable training.
+- Big dataset, dissimilar: With a large dataset that's very different from the original, it's better to train from scratch 
+  as the pre-trained features might not be relevant and we have enough data to learn good features.
 
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+<br>
+
+![image info](images/train.png)
+
+<br>
 
 ### Transformers 
 
