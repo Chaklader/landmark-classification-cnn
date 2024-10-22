@@ -1,5 +1,7 @@
 # CNN CONCEPTS 
 
+### Course: CS231n Convolutional Neural Networks for Visual Recognition | Stanford University
+
 1. Introduction to CNNs and basic concepts
 
 * Use Multi-Layer Perceptrons (MLPs) for image classification
@@ -2924,6 +2926,553 @@ Explanation for each case:
   then rest) helps maintain stable training.
 - Big dataset, dissimilar: With a large dataset that's very different from the original, it's better to train from scratch 
   as the pre-trained features might not be relevant and we have enough data to learn good features.
+
+
+
+### Visualizing CNNs 
+
+<br>
+
+![image info](images/viz.png)
+
+<br>
+
+
+#### Course: CS231n Convolutional Neural Networks for Visual Recognition | Stanford University 
+
+### Glossary
+
+Skip connection: An innovation of ResNet, this is a path in a network allowing it to jump a layer if needed.
+
+Global Average Pooling (GAP) layer: A type of pooling equivalent to Average Pooling, but with the average taken over the 
+entire feature map. It is equivalent to an Average Pooling layer with the window size equal to the input size.
+
+Channel Attention (Squeeze-and-excitation, or SE, block): A little network-in-network that allows the model to pay more 
+attention to some feature maps that are more useful than others to classify a specific image.
+
+Self Attention: A mechanism alternative to convolution+pooling and characteristic of the Transformers architecture. It 
+allows the model to directly learn the relationship between different parts of the image and use it to solve the task at 
+hand (e.g., image classification).
+
+Transfer learning: A set of techniques that allow to re-use what a network has learned from a dataset on a different dataset. 
+It allows us to get very good performances much more quickly, and on smaller datasets, than training from scratch.
+
+Frozen parameter: A parameter that is not allowed to vary during training.
+
+
+
+# Introduction to Autoencoders
+
+
+Autoencoders are a very interesting neural network architecture that can be used for different applications directly (anomaly 
+detection, denoising, ...), and it is also widely used in larger and modern architectures for other tasks (object detection, 
+image segmentation).
+
+More advanced versions of autoencoders, such as variational autoencoders, can also be used as generative models, i.e., they 
+can learn representations of data and use that representation to generate new realistic images.
+
+
+In this lesson, you will learn:
+
+1. About linear and CNN-based autoencoders
+2. How to design and train a linear autoencoder for anomaly detection
+3. How to design and train a CNN autoencoder for anomaly detection
+4. How to apply autoencoders for image denoising
+5. About autoencoders and generative models
+
+
+
+When studying CNNs for image classification or regression we have seen that the network is essentially composed of two parts: 
+a backbone that extracts features from the image, and a Multi-Layer Perceptron or similar that uses those features to decide 
+which class the image belongs to. In-between the two we have a flattening operation (or a Global Average Pooling layer) that 
+takes the last feature maps coming out of the backbone and transforms them into a 1d array, which is a feature vector.
+
+
+CNN Structure Image Description
+The image shows a flowchart starting with an input image of a blue car, progressing through layers labeled "conv 1," "maxpool," 
+"conv 2," "maxpool," followed by "flatten," and ending with a "fully-connected layer" leading to a final output labeled "predicted 
+class." The flowchart visually describes how the CNN processes and classifies the input image.
+
+What are Autoencoders?
+Autoencoders have a similar backbone (called encoder in this context) that produces a feature vector (called embedding in this 
+context). However, they substitute the fully-connected layers (the head) with a decoder stage whose scope is to reconstruct 
+the input image starting from the embeddings:
+
+
+This can appear pointless at first glance, but it is actually very useful in many contexts.
+
+Uses of Autoencoders
+We can use autoencoders to:
+
+1. Compress data
+2. Denoise data
+3. Find outliers (do anomaly detection) in a dataset
+4. Do inpainting (i.e., reconstruct missing areas of an image or a vector)
+5. With some modifications, we can use autoencoders as generative models - models capable of generating new images
+
+Autoencoders are also the basis for a whole field of research concerned with metric learning, which is learning representations 
+of images that can be useful in downstream tasks.
+
+
+Unsupervised vs. Supervised Learning
+By looking closer at the structure and the tasks we have just described, you can see that autoencoders do not use the 
+information on the label of the image at all. They are only concerned with the image itself, not with its label. The 
+tasks that autoencoders address are examples of unsupervised learning, where the algorithm can learn from a dataset 
+without any label. Another example of unsupervised learning that you might be familiar with is clustering.
+
+CNNs for image classification are instead an example of supervised learning, where the network learns to distinguish 
+between classes by learning from a labeled dataset.
+
+The Loss of Autoencoders
+The autoencoder is concerned with encoding the input to a compressed representation, and then re-constructing the original 
+image from the compressed representation. The signal to train the network comes from the differences between the input and 
+the output of the autoencoder.
+
+For example, let's consider an autoencoder for images. We compare the input image to the output image and we want them to 
+be as similar as possible.
+
+What is the right loss for this task?
+
+We have different possibilities, but the most common one is the Mean Squared Error (MSE) loss. It just considers the square 
+of the difference between each pixel in the input image and the corresponding pixel in the output image, so minimizing this 
+loss is equivalent to minimizing the difference of each pixel in the input with the corresponding pixel in the output. In 
+practice, this is given by the formula:
+
+### 1. Mean Squared Error (MSE) Formula
+$MSE = \frac{1}{n_{\text{rows}}n_{\text{cols}}} \sum_{i=1}^{n_{\text{rows}}} \sum_{j=1}^{n_{\text{cols}}} (x_{ij} - \hat{x}_{ij})^2$
+
+Where:
+- $n_{\text{rows}}$ is the number of rows in the image
+- $n_{\text{cols}}$ is the number of columns in the image
+- $x_{ij}$ is the pixel value at position (i,j) in the input image
+- $\hat{x}_{ij}$ is the pixel value at position (i,j) in the output image
+- $\sum_{i=1}^{n_{\text{rows}}} \sum_{j=1}^{n_{\text{cols}}}$ represents summation over all pixels
+
+The MSE loss provides a measure of the average squared difference between corresponding pixels in the input and reconstructed 
+images, commonly used in image-related tasks like autoencoders and image generation.
+
+
+
+You will get a chance in the exercise upcoming to try out this code on your own!
+
+In this first look we have built the simplest autoencoder, which is made up of two linear layers:
+
+
+```textmate
+class Autoencoder(nn.Module):
+
+    def __init__(self, encoding_dim):
+        super(Autoencoder, self).__init__()
+        ## encoder ##
+        self.encoder = nn.Sequential(
+            nn.Linear(28*28, encoding_dim),
+            nn.ReLU(),
+            nn.BatchNorm1d(encoding_dim)
+        )
+
+        ## decoder ##
+        self.decoder = nn.Sequential(
+            nn.Linear(encoding_dim, 28*28),
+            nn.Sigmoid()
+        )
+
+        self.auto_encoder = nn.Sequential(
+            nn.Flatten(),
+            self.encoder,
+            self.decoder
+        )
+
+    def forward(self, x):
+        # define feedforward behavior 
+        # and scale the *output* layer with a sigmoid activation function
+
+        encoded = self.auto_encoder(x)
+
+        # Reshape the output as an image
+        # remember that the shape should be (batch_size, channel_count, height, width)
+        return encoded.reshape((x.shape[0], 1, 28, 28))
+```
+
+We have trained it using the Mean Squared Error (MSE) loss. Of course, we did not use the labels, since anomaly detection 
+with autoencoders is an unsupervised task.
+
+
+Question 1 of 4:
+Below are the parts of an autoencoder. Can you match each of them with the correct description?
+
+Answer:
+- Encoder: Takes the input image and compresses it into a compact representation (embedding)
+- Embedding: A 1d vector that encodes the information contained in the input image
+- Decoder: Takes the embedding vector and generates a new image
+
+Explanation: An autoencoder consists of these three main components working together to compress and reconstruct data. The encoder compresses the input into a lower-dimensional embedding, and the decoder attempts to reconstruct the original input from this embedding.
+
+Question 2 of 4:
+What are autoencoders used for? (Select all that apply)
+
+Answer: All options are valid uses:
+- Image inpainting (reconstruct missing areas)
+- Anomaly detection
+- Denoising data
+
+Explanation: Autoencoders are versatile and can be used for multiple purposes:
+1. Image inpainting: Can learn to fill in missing parts of images
+2. Image classification: The learned embeddings can be used as features
+3. Image segmentation: Can learn meaningful image representations
+4. Anomaly detection: Can detect abnormal patterns by reconstruction error
+5. Denoising: Can learn to output clean versions of noisy inputs
+
+Question 3 of 4:
+What is unsupervised learning?
+
+Answer: It means learning without the need for labels
+
+Explanation: Unsupervised learning is a type of machine learning where the algorithm learns patterns from data without explicit labels or supervision. In the context of autoencoders, they learn to reconstruct their input without needing any external labels, making them an unsupervised learning technique.
+
+Question 4 of 4:
+When using the Mean Squared Error loss in an autoencoder, what are we comparing?
+
+Answer: The input image and the output image
+
+Explanation: In autoencoders, MSE loss measures the pixel-wise difference between the input image and its reconstruction (output image). This encourages the network to learn to reconstruct its inputs as accurately as possible, despite going through a compressed embedding. The formula is:
+$MSE = \frac{1}{n_{\text{rows}}n_{\text{cols}}} \sum_{i=1}^{n_{\text{rows}}} \sum_{j=1}^{n_{\text{cols}}} (x_{ij} - \hat{x}_{ij})^2$
+where $x_{ij}$ is the input pixel and $\hat{x}_{ij}$ is the reconstructed pixel.
+
+
+
+We have seen how to use linear layers to create an autoencoder. Since we are working on images, it is natural to use convolution 
+instead of just linear layers. Convolution allows us to keep spatial information and get a much more powerful representation of 
+the content of an image.
+
+However, this poses a problem: while the encoder section can be just the backbone of a standard CNN, what about the decoder part? 
+Yes, we could flatten the output of the backbone and then use linear layers to decode. But there are also other ways to upsample a 
+compact representation into a full-resolution image. For example, we can use a Transposed Convolutional Layer, which can learn how 
+to best upsample an image. We'll see how that works on the next page.
+
+
+### Learnable Upsampling
+
+
+We have seen how to use linear layers to create an autoencoder. Since we are working on images, it is natural to use convolution 
+instead of just linear layers. Convolution allows us to keep spatial information and get a much more powerful representation of 
+the content of an image.
+
+However, this poses a problem: while the encoder section can be just the backbone of a standard CNN, what about the decoder part? 
+Yes, we could flatten the output of the backbone and then use linear layers to decode. But there are also other ways to upsample 
+a compact representation into a full-resolution image. For example, we can use a Transposed Convolutional Layer, which can learn 
+how to best upsample an image. We'll see how that works on the next page.
+
+
+### Transposed Convolutions
+
+The Transposed Convolution can perform an upsampling of the input with learned weights. In particular, a Transposed Convolution 
+with a 2 x 2 filter and a stride of 2 will double the size of the input image.
+
+Whereas a Max Pooling operation with a 2 x 2 window and a stride of 2 reduces the input size by half, a Transposed Convolution 
+with a 2 x 2 filter and a stride of 2 will double the input size.
+
+Let's consider an autoencoder with two Max Pooling layers in the encoder, both having a 2 x 2 window and a stride of 2. If 
+we want the network to output an image with the same size as the input, we need to counteract the two Max Pooling layers 
+in the encoder with two Transposed Convolution layers with a 2 x 2 filter and a stride of 2 in the decoder. This will give 
+us back an output with the same size as the input.
+
+
+### Transposed Convolutions in PyTorch
+
+Transposed Convolutions in PyTorch
+You can generate a Transposed Convolution Layer in PyTorch with:
+
+```textmate
+unpool = nn.ConvTranspose2d(input_ch, output_ch, kernel_size, stride=2)
+```
+
+See the full documentation on ConvTranspose2d(opens in a new tab) for more details.
+
+For example, we can generate a Transposed Convolution Layer that doubles the size of an input grayscale image and generates 
+16 feature maps as follows:
+
+```textmate
+unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
+```
+
+
+
+### Alternative to a Transposed Convolution
+
+The Transposed Convolutions tend to produce checkerboard artifacts in the output of the networks as detailed in this Distill 
+article(opens in a new tab). Therefore, nowadays many practitioners replace them with a nearest-neighbor upsampling operation 
+followed by a convolution operation. The convolution makes the image produced by the nearest-neighbors smoother. For example, 
+we can replace this Transposed Convolution:
+
+```textmate
+unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
+```
+
+with:
+
+```textmate
+unpool = nn.Sequential(
+    nn.Upsample(scale_factor = 2, mode='nearest'),
+    nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+)
+```
+
+The simplest autoencoder using CNNs can be constructed with a convolutional layer followed by Max Pooling, and then an 
+unpooling operation (such as a Transposed Convolution) that brings the image back to its original size:
+
+
+```textmate
+class Autoencoder(nn.Module):
+    def __init__(self, encoding_dim):
+        super(Autoencoder, self).__init__()
+
+        ## encoder ##
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 3, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2)
+        )
+
+        ## decoder ##
+        self.decoder = nn.Sequential(
+            # Undo the Max Pooling
+            nn.ConvTranspose2d(3, 1, 2, stride=2),
+            nn.Sigmoid()
+        )
+
+        self.auto_encoder = nn.Sequential(
+            self.encoder,
+            self.decoder
+        )
+
+    def forward(self, x):
+        # define feedforward behavior 
+        # and scale the *output* layer with a sigmoid activation function
+
+        return self.auto_encoder(x)
+```
+
+Of course, this autoencoder is not very performant. Typically you want to compress the information much more with a deeper 
+encoder, and then uncompress it with a deeper decoder. This is what you are going to do in the next exercise.
+
+In real-life situations, you can also use an already-existing architecture like a ResNet to extract the features (just 
+remember to remove the final linear layers, i.e., the head and only keep the backbone). Of course, your decoder needs to 
+then start from the embedding built by the architecture to get back to the dimension of the input image.
+
+
+Question 1 of 3:
+Below are some of the concepts we just discussed. Can you match each of them with the correct description?
+
+Answer:
+- Upsampling: Resizing an image to increase its size
+- Max Pooling: A layer that rolls a window over an image, and takes the maximum pixel value for each window
+- Transposed Convolution: A layer that intelligently upsample an image, by using a learnable convolutional kernel
+- Nearest Neighbors upsampling: An upsampling technique that copies the value from the nearest pixel
+
+Explanation: Each of these concepts plays a different role in neural networks:
+1. Upsampling is the general concept of increasing image dimensions
+2. Max Pooling is used for downsampling and feature extraction
+3. Transposed Convolution (also called deconvolution) is a learnable upsampling method
+4. Nearest Neighbors is a simple upsampling method that copies values
+
+
+Question 2 of 3:
+
+How many Transposed Convolutional layers with a kernel size of 2 and a stride of 2 do we need to upsample the result of 
+the encoder back to the input shape?
+
+```textmate
+encoder = nn.Sequential(
+            nn.Conv2d(1, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2)
+ )
+```
+
+Answer: Two, The Transposed Convolution can be thought as the "inverse" of a 2 x 2 Max Pooling operation, in the sense that 
+while MaxPool2d(2, 2) halves the size of the input, a Transposed Convolution with a kernel size of 2 and a stride of 2 doubles 
+the input size. So if there are 2 Max Pooling operations, we need two Transposed Convolution operations.
+
+Explanation:
+Looking at the encoder architecture:
+1. First MaxPool2d(2, 2) reduces dimensions by 2
+2. Second MaxPool2d(2, 2) reduces dimensions by 2 again
+Total reduction: 4x (2 * 2)
+Therefore, we need two Transposed Convolutional layers to reverse this reduction and restore the original dimensions.
+
+Question 3 of 3:
+
+You are training an autoencoder on RGB images that are 256 pixels high and 256 pixels wide. Your autoencoder has the following 
+architecture for the encoder part:
+
+```textmate
+encoder = nn.Sequential(
+        nn.Conv2d(3, 32, 3, padding=1),
+        nn.ReLU(),
+        nn.MaxPool2d(2, 2),
+        nn.Conv2d(32, 32, 3, padding=1),
+        nn.ReLU(),
+        nn.MaxPool2d(2, 2)
+ )
+```
+
+What is the shape of the embedding, i.e., of the vector computed with encoder(x), if 'x' is a batch of 64 input images?
+
+Answer: (64, 32, 64, 64)
+
+We have two Max Pooling layers, and the convolutional layers are using a kernel size of 3 and a padding of 1 so they do 
+not affect the shape. If we start with a shape of (64, 3, 256, 256), corresponding to 64 images with 3 channels and a 
+height and a width of 256, then we halve the image size after each Max Pooling layer. So 256 / 2 / 2 = 64.
+
+Explanation:
+Let's trace the dimensions through the encoder:
+1. Input: (64, 3, 256, 256) [batch_size, channels, height, width]
+2. After first Conv2d: (64, 32, 256, 256) [changes channels to 32]
+3. After first MaxPool2d: (64, 32, 128, 128) [halves spatial dimensions]
+4. After second Conv2d: (64, 32, 128, 128) [maintains channels at 32]
+5. After second MaxPool2d: (64, 32, 64, 64) [halves spatial dimensions again]
+
+Therefore, the final embedding shape is (64, 32, 64, 64).
+
+
+### Denoising
+
+We call denoising the task of removing noise from an image by reconstructing a denoised image.
+
+This is a task that convolutional autoencoders are well-suited for.
+
+<br>
+
+![image info](images/denoise.png)
+
+<br>
+
+
+How Do We Train a Denoising Autoencoder?
+
+In order to train a denoising autoencoder we need to have access to the denoised version of the images. The easiest way 
+to do this is to build a training dataset by taking clean images and adding noise to them. Then we will feed the image 
+with the added noise into the autoencoder, and ask it to reconstruct the denoised (original) version.
+
+It is very important that we then compute the loss by comparing the input uncorrupted image (without noise) and the output 
+of the network. DO NOT use the noisy version when computing the loss, otherwise your network will not learn!
+
+Why Does it Work?
+
+Let's consider an autoencoder trained on a noisy version of the MNIST dataset. During training, the autoencoder sees many 
+examples of all the numbers. Each number has noisy pixels in different places. Hence, even though each number is corrupted 
+by noise, the autoencoder can piece together a good representation for each number by learning different pieces from different 
+examples. Here the convolutional structure helps a lot, because after a few layers the convolution smooths out a lot of the 
+noise in a blurry but useful image of the number. This is also why generally you need to go quite deep with CNN autoencoders 
+if you want to use them for denoising.
+
+
+
+Question 1 of 2:
+
+If the tensor `images` represents a batch of uncorrupted images, and `noisy_images` represents a batch of images where we 
+added noise, which is the correct application of the loss? (Assume that `outputs` is a batch of outputs from the autoencoder, 
+and `loss = nn.MSELoss()`.)
+
+Answer: `loss(images, outputs)`. You have to compare the output of the network with the uncorrupted images.
+
+Explanation:
+In a denoising autoencoder:
+1. The input is the noisy image (`noisy_images`)
+2. The output is the network's attempt to reconstruct the clean image
+3. We want to compare this reconstruction (`outputs`) with the original clean images (`images`)
+4. Therefore, we calculate loss between the network's output and the original clean images
+
+The goal is to train the network to remove noise, so we compare its output to the original clean image, not to the noisy 
+input or any other combination.
+
+Question 2 of 2:
+What are the operations that are involved in training a denoising autoencoder? (check all that apply)
+
+Answer: All options apply:
+1. Loop over each batch in the training data loader
+2. Add noise to the images in the batch
+3. Compute the prediction from the network, i.e., the reconstructed images
+4. Compare the reconstructed images with the input (uncorrupted) images using a loss like nn.MSELoss
+5. Perform backpropagation
+
+Explanation:
+The training process for a denoising autoencoder involves all these steps in sequence:
+1. First, we need to iterate through our training data in batches
+2. For each batch, we create a noisy version of the images (this is what makes it a "denoising" autoencoder)
+3. We pass the noisy images through the network to get reconstructed images
+4. We compare these reconstructions with the original clean images using MSE loss
+5. Finally, we use backpropagation to update the network's weights to minimize this loss
+
+
+This complete process allows the autoencoder to learn how to remove noise from images by trying to reconstruct clean versions 
+from noisy inputs.
+
+
+As we have seen, an autoencoder has an encoder part that compresses the input into a vector (embedding) and a decoder part 
+that takes the embedding and tries to regenerate the input.
+
+Let's look closer at the embeddings for the MNIST dataset. Even though we did not use the labels for training the autoencoder, 
+we can use them for visualization purposes and see if the embedding that the encoder has learned separates well the various 
+classes. After all, if the encoder has learned the latent characteristics that distinguish a 3 from a 1 or a 8 from a 7, 
+then the embedding space should reflect this structure.
+
+Let's consider the CNN autoencoder we presented as a solution to the Convolutional Encoder exercise of this lesson. It has 
+a latent space (where the embeddings live) of 32 feature maps each 7 x 7 pixels. This corresponds to 1568 numbers. Of course 
+we cannot visualize a space with 1568 dimensions, so we are going to use the UMAP(opens in a new tab) dimensionality reduction 
+technique to visualize it in 2d:
+
+
+Here the different colors correspond to the different classes in the MNIST dataset (the different digits). To make things 
+easier, I annotated each cluster with the label of the most common class in the cluster.
+
+It is indeed clear that images representing similar numbers are clustered together. Not only are most of the points belonging 
+to the same class close to each other, but also numbers that are visually similar to each other (like 3, 8 and 5) are close 
+in the latent space.
+
+Looking at this we could ask: what happens if we generate an embedding vector close to one of these clusters, and run it 
+through the decoder? We should be able to generate new numbers! This is indeed the case. If we take a few points in the 
+embedding space and run them through the decoder, we obtain images such as:
+
+
+
+We have just generated new MNIST images!
+
+However, if we repeat this exercise enough we soon realize that things don't look so great. The embedding space of an autoencoder 
+is discontinuous: you can take an embedding of a 3, modify it just a tiny bit and end up with a completely different number, or 
+even something that does not resemble a number at all. Why? Because in our training we use a loss that does not enforce any 
+particular structure in the embedding space, so the network finds the one that happens to solve our problem best, without 
+considering any constraints regarding the structure of the space.
+
+In more formal terms we can say that the autoencoder learns a mapping between our images and the embedding space. It does 
+not learn the distribution of the data in the embedding space.
+
+This problem can be solved by other algorithms, for example the so-called Variational Autoencoders (VAEs). They learn to 
+project our points in an embedding space that has much more structure than a simple autoencoder. VAEs are proper generative 
+models, in that they learn to represent the distribution of the dataset and therefore their embedding space is much more 
+regular and more suited for data generation.
+
+A deeper dive into VAEs goes beyond the scope of this class, but you can find more information here(opens in a new tab). 
+With what you learned in this lesson you should be able to learn VAEs in a breeze!
+
+
+### Glossary
+
+
+Autoencoder: A neural network architecture consisting of an encoder part, which takes an input and compresses it into a 
+low-dimensional embedding vector, and a decoder part, which takes the embedding and tries to reconstruct the input image 
+from it.
+
+Transposed Convolution: A special type of convolution that can be used to intelligently upsample an image or a feature map
+
+Denoising: The task of taking an image corrupted by noise and generating a version of the image where the noise has been 
+removed.
+
+Variational autoencoder (VAE): An extension of the idea of autoencoders that transforms them into proper generative models.
+
 
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
