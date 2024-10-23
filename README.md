@@ -4439,15 +4439,28 @@ This loss function provides a continuous, differentiable measure that can effect
 balancing precision and recall.
 
 
+
+
+
 Question 1 of 5:
 Computer vision tasks and their descriptions:
 
 Answer:
-- Image classification: Assign one or more labels to an entire image
-- Object localization: Determine if an image contains an object, and localize it with a bounding box
-- Object detection: Localize all relevant objects in an image with bounding boxes
-- Semantic segmentation: Classify every pixel as belonging to classes of objects or the background
-- Instance segmentation: Classify every pixel as belonging to different instances of classes, or the background
+
+| Task | Description |
+|----------|-------------|
+| Assign one or more labels to an entire image | Image classification |
+| Determine if an image contains an object, and localize it with a bounding box | Object localization |
+| Localize all relevant objects in an image with bounding boxes | Object detection |
+| Classify every pixel as belonging to classes of objects or the background | Semantic segmentation |
+| Classify every pixel as belonging to different instances of classes, or the background | Instance segmentation |
+
+
+The tasks of image localization, object detection, semantic segmentation and instance segmentation are all standard computer 
+vision tasks beyond image classification
+
+
+Would you like me to do the same format for the other answers as well?
 
 Question 2 of 5:
 Ground truth inputs needed for different tasks:
@@ -4475,8 +4488,6 @@ Characteristics of a UNet architecture:
 Answer: 
 All options apply:
 - An encoder-decoder structure
-- Global Average Pooling
-- Self-attention layers
 - Lateral skip connections, connecting feature maps in the downsampling path to feature maps in the upsampling path
 
 Question 5 of 5:
@@ -4496,15 +4507,40 @@ The explanation for each choice:
 - Not derived from accuracy: It's derived from F1 score instead
 
 
-–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+### Glossary
 
-<br>
 
-![image info](images/train.png)
+Object localization: The task of determining if an image contains an object, and localize it with a bounding box.
 
-<br>
+Bounding box: A rectangular box that completely encloses a given object in an image, whose sides are parallel to the sides of the image.
 
-### Transformers 
+Multi-head model: A CNN where we have one backbone but more than one head.
+
+Object detection: The task of localizing using a bounding box every object of interest in an image.
+
+Anchors: Windows with different sizes and different aspect ratios, placed in the center of cells defined by a grid on an image.
+
+Feature Pyramid Network (FPN): An architecture that extracts multi-level, semantically-rich feature maps from an image.
+
+Focal Loss: A modification of the Cross-Entropy Loss, **by **including a factor in front of the CE Loss to dampen the loss 
+due to examples that are already well-classified, so they do not dominate.
+
+Mean Average Recall (mAR): A metric for object detection algorithms. It is obtained by computing the Average Recall for 
+each class of objects, as twice the integral of the Recall vs IoU curve, and then by averaging the Average Recall for 
+each class.
+
+Mean Average Precision (mAP): A metric for object detection algorithms. It is obtained by computing the Average Precision 
+(AP) for each class. The AP is computed by integrating an interpolation of the Precision-Recall curve. The mAP is the mean 
+average of the AP over the classes.
+
+Intersection over Union (IoU): The ratio between the area of the intersection, or overlap, and the area of the union of 
+two boxes or polygons. Used to measure how much two boxes coincide.
+
+Semantic segmentation: The task of assigning a class to each pixel in an image.
+
+Dice loss: A useful measure of loss for semantic segmentation derived from the F1 score, which is the geometric mean of 
+precision and recall. The Dice loss tends to balance precision and recall at the pixel level.
+
 
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 ## Project Overview
