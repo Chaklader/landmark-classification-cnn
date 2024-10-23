@@ -4270,6 +4270,232 @@ These metrics are used to evaluate object detection models:
 The formula for mAR was previously shown: $mAR = \frac{\sum_{i=1}^{K} AR_i}{K}$
 
 
+
+
+### Image Segmentation
+
+
+The task of semantic segmentation consists of classifying each pixel of an image to determine to which class it belongs. 
+For example, if we want to distinguish between people, cars, and background, the output looks like this:
+
+We have briefly mentioned previously, but are not going to discuss further here, another technique of image segmentation 
+called instance segmentation. But if you are interested in researching it, you can find more information about it in the 
+article on instance segmentation with PyTorch and Mask R-CNN at DebuggerCafe. 
+
+
+
+### Semantic Segmentation: UNet
+
+
+The UNet is a specific architecture for semantic segmentation. It has the structure of a standard autoencoder, with an 
+encoder that takes the input image and encodes it through a series of convolutional and pooling layers into a low-dimensional 
+representation.
+
+Then the decoder architecture starts from the same representation and constructs the output mask by using transposed convolutions. 
+However, the UNet adds skip connections between the feature maps at the same level in the encoder and in the decoder, as shown below:
+
+<br>
+
+![image info](images/unet.png)
+
+<br>
+
+In the decoder, the feature map coming from the decoder path is concatenated along the channel dimension with the feature 
+map coming from the encoder path. This means that the next transposed convolution layer has access to information with 
+high semantic content coming from the previous decoder layer, along with information with high detail coming from the 
+encoder path. The final segmentation mask is then a lot more detailed than what you would obtain with a simple encoder-decoder 
+architecture without skip connections between the encoder and the decoder.
+
+
+# The Dice Loss
+
+There are a few different losses that one can use for semantic segmentation. One loss that tend to work well in practice is 
+called Dice loss, named after Lee Raymond Dice, who published it in 1945. Here is how Dice loss is calculated:
+
+$\text{Dice loss} = 1 - \frac{2\sum_{i=1}^{n_{\text{pix}}} p_iy_i}{\sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)}$
+
+Where:
+- $p_i$ represents the i-th pixel in the prediction mask
+- $y_i$ represents the i-th pixel in the ground truth mask
+- $n_{\text{pix}}$ is the total number of pixels in the image
+- $\sum_{i=1}^{n_{\text{pix}}}$ indicates summation over all pixels
+
+The Dice loss derives from the F1 score, which is the geometric mean of precision and recall. Consequently, the Dice loss 
+tends to balance precision and recall at the pixel level.
+
+Key Points:
+1. Used primarily in semantic segmentation tasks
+2. Based on F1 score principles
+3. Balances precision and recall
+4. Particularly effective for pixel-level predictions
+5. Named after Lee Raymond Dice (1945)
+
+This loss function is especially useful in segmentation tasks where we need to compare predicted masks with ground truth 
+masks at the pixel level.
+
+
+
+UNet in PyTorch
+
+We will use the implementation of UNet provided by the wonderful open-source library segmentation_models for PyTorch(opens 
+in a new tab). The library also implements the Dice loss.
+
+This is how you can define a UNet using this library:
+
+
+```textmate
+import segmentation_models_pytorch as smp
+
+# Binary segmentation?
+binary = True
+n_classes = 1
+
+model = smp.Unet(
+        encoder_name='resnet50',
+        encoder_weights='imagenet',
+        in_channels=3,
+        # +1 is for the background
+        classes=n_classes if binary else n_classes + 1)
+```
+
+The Dice loss is simply:
+
+```textmate
+loss = smp.losses.DiceLoss(smp.losses.BINARY_MODE, from_logits=True)
+```
+
+# Derivation of the Dice Loss (optional, for those who are interested)
+
+We start from the formula of the F1 score:
+
+$F_1 = \frac{2TP}{2TP + FN + FP}$
+
+Where:
+- $TP$ represents True Positives
+- $FN$ represents False Negatives
+- $FP$ represents False Positives
+
+This forms the foundation for deriving the Dice Loss, which is essentially $1 - F_1$ when applied at the pixel level in 
+image segmentation tasks.
+
+The relationship to the previous Dice Loss formula can be understood when:
+- True Positives correspond to matching pixels ($p_iy_i$)
+- The denominator accounts for all predictions ($p_i$) and ground truth ($y_i$) pixels
+
+This representation helps understand why Dice Loss is effective for semantic segmentation tasks, as it directly derives 
+from the F1 score's balanced treatment of precision and recall.
+
+
+Let's consider for simplicity the binary classification problem, and let's imagine we want to segment a car in an image. 
+In semantic segmentation we can define the True Positives (TP), the False Negatives (FN), and the False Positives (FP) as 
+illustrated by the following diagram, where the gray mask is the ground truth mask for the car and the blue mask is the 
+prediction from the model (a bad model in this case, but we use this example to make the illustration easier):
+
+
+Here's the OCR text with LaTeX formatting for mathematical symbols:
+
+Here $p_i$ represents the class probability coming from the network, while $y_i$ is the ground truth. While the $p_i$ will 
+be numbers between 0 and 1, the $y_i$ are either 0 (for the background class) or 1 for the foreground class.
+
+Variables explained:
+- $p_i$: Network output probabilities (continuous values between 0 and 1)
+- $y_i$: Ground truth labels (binary values: 0 or 1)
+  - 0: Background class
+  - 1: Foreground class
+
+# Derivation of the Dice Loss
+
+Let's start with how we compute $TP$:
+$TP = \sum_{i=1}^{n_{\text{pix}}} p_iy_i$
+
+Since $y_i$ is either 0 or 1, the sum over all pixels is equivalent to the sum of the $p_i$ limited to pixels where $y_i$ 
+is equal to 1. The higher the $p_i$ is for this subset, the more the network is confident that the positive pixels are 
+indeed positive, the higher the "continuous" TP value will be.
+
+For the denominator of $F_1$ expression:
+$2TP + FN + FP = \sum_{i=1}^{n_{\text{pix}}} p_i + \sum_{i=1}^{n_{\text{pix}}} y_i = \sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)$
+
+The "continuous" version of the $F_1$ score - called the Dice coefficient - is:
+
+$\text{Dice coeff} = \frac{2\sum_{i=1}^{n_{\text{pix}}} p_iy_i}{\sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)}$
+
+Properties:
+- Maximum when predicted probabilities $p_i$ are 1 for all pixels where $y_i = 1$ in ground truth
+- Both numerator and denominator equal $2n_{\text{pix}}$ for perfect performance
+- Perfect performance gives coefficient of 1
+
+Finally, the Dice loss is defined as:
+
+$\text{Dice loss} = 1 - \frac{2\sum_{i=1}^{n_{\text{pix}}} p_iy_i}{\sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)}$
+
+Key points:
+- Loss decreases as performance improves
+- Equals 0 only with perfect network output
+- Derived from $F_1$ score principles
+- Suitable for gradient-based optimization
+- Effective for semantic segmentation tasks
+
+This loss function provides a continuous, differentiable measure that can effectively train segmentation models while 
+balancing precision and recall.
+
+
+Question 1 of 5:
+Computer vision tasks and their descriptions:
+
+Answer:
+- Image classification: Assign one or more labels to an entire image
+- Object localization: Determine if an image contains an object, and localize it with a bounding box
+- Object detection: Localize all relevant objects in an image with bounding boxes
+- Semantic segmentation: Classify every pixel as belonging to classes of objects or the background
+- Instance segmentation: Classify every pixel as belonging to different instances of classes, or the background
+
+Question 2 of 5:
+Ground truth inputs needed for different tasks:
+
+Answer:
+- Image classification: Image label(s)
+- Object localization: Object label, bounding box of the object of interest
+- Object detection: Object labels, bounding boxes of all objects of interest
+- Binary semantic segmentation: Semantic mask with foreground and background
+- Multi-class semantic segmentation: Semantic masks for all classes (including background)
+
+Question 3 of 5:
+Outputs provided by models for different tasks:
+
+Answer:
+- Image classification: Class scores for the image
+- Object localization: Class scores for the relevant object in the image and one bounding box
+- Object detection: Label and bounding box for each relevant object in the image
+- Binary semantic segmentation: Mask where values are between 0 and 1 and represent the probability of each pixel to be foreground
+- Multi-class semantic segmentation: Mask with k channels, where value p_k in channel k is the class score for the pixel for class k
+
+Question 4 of 5:
+Characteristics of a UNet architecture:
+
+Answer: 
+All options apply:
+- An encoder-decoder structure
+- Global Average Pooling
+- Self-attention layers
+- Lateral skip connections, connecting feature maps in the downsampling path to feature maps in the upsampling path
+
+Question 5 of 5:
+Main characteristics of the Dice Loss:
+
+Answer:
+Three characteristics apply:
+- It derives from the expression of the F1 score
+- It produces results that tend to balance precision and recall
+- A network with perfect performance will have a Dice Loss of 0
+
+The explanation for each choice:
+- Derives from F1 score: This is true, as shown in the derivation
+- Balances precision and recall: This is a key property inherited from its F1 score origins
+- Perfect performance gives 0 loss: This is true by design of the loss function
+- Not a general image classification loss: It's specifically designed for segmentation tasks
+- Not derived from accuracy: It's derived from F1 score instead
+
+
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 <br>
