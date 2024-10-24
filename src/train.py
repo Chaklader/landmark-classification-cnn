@@ -93,15 +93,21 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
     """
     Performs one train_one_epoch epoch
     """
+    # Check for MPS availability first (Apple Silicon)
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    # Then check for CUDA
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
 
-    if torch.cuda.is_available():
-        model = model.cuda()
-
+    # Move model to the appropriate device
+    model = model.to(device)
     model.train()
 
     train_loss = 0.0
 
-    # Fix the tqdm enumeration
     for batch_idx, (data, target) in enumerate(tqdm(
             train_dataloader,
             desc="Training",
@@ -109,9 +115,8 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
             leave=True,
             ncols=80,
     )):
-        # move data to GPU
-        if torch.cuda.is_available():
-            data, target = data.cuda(), target.cuda()
+        # Move data to appropriate device
+        data, target = data.to(device), target.to(device)
 
         # 1. clear the gradients
         optimizer.zero_grad()
@@ -140,12 +145,21 @@ def valid_one_epoch(valid_dataloader, model, loss):
     """
     Validate at the end of one epoch
     """
+    # Check for MPS availability first (Apple Silicon)
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    # Then check for CUDA
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
     with torch.no_grad():
         # Set model to evaluation mode
         model.eval()
 
-        if torch.cuda.is_available():
-            model.cuda()
+        # Move model to appropriate device
+        model = model.to(device)
 
         valid_loss = 0.0
         for batch_idx, (data, target) in enumerate(tqdm(
@@ -155,9 +169,8 @@ def valid_one_epoch(valid_dataloader, model, loss):
                 leave=True,
                 ncols=80
         )):
-            # move data to GPU
-            if torch.cuda.is_available():
-                data, target = data.cuda(), target.cuda()
+            # Move data to appropriate device
+            data, target = data.to(device), target.to(device)
 
             # 1. forward pass
             output = model(data)
@@ -353,6 +366,15 @@ def one_epoch_test(test_dataloader, model, loss):
     Returns:
         test_loss: average test loss
     """
+    # Check for MPS availability first (Apple Silicon)
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    # Then check for CUDA
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
     # monitor test loss and accuracy
     test_loss = 0.
     correct = 0.
@@ -360,12 +382,11 @@ def one_epoch_test(test_dataloader, model, loss):
 
     # set the module to evaluation mode
     with torch.no_grad():
-
         # set the model to evaluation mode
         model.eval()
 
-        if torch.cuda.is_available():
-            model = model.cuda()
+        # Move model to appropriate device
+        model = model.to(device)
 
         for batch_idx, (data, target) in enumerate(tqdm(
                 test_dataloader,
@@ -374,9 +395,8 @@ def one_epoch_test(test_dataloader, model, loss):
                 leave=True,
                 ncols=80
         )):
-            # move data to GPU
-            if torch.cuda.is_available():
-                data, target = data.cuda(), target.cuda()
+            # Move data to appropriate device
+            data, target = data.to(device), target.to(device)
 
             # 1. forward pass: compute predicted outputs by passing inputs to the model
             logits = model(data)
