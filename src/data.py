@@ -242,12 +242,11 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
     :return: None
     """
 
-    # YOUR CODE HERE:
     # obtain one batch of training images
     # First obtain an iterator from the train dataloader
     # obtain one batch of training images
-    dataiter = iter(data_loaders["train"])  # First YOUR CODE HERE
-    images, labels = next(dataiter)  # Second YOUR CODE HERE
+    dataiter = iter(data_loaders["train"])
+    images, labels = next(dataiter)
 
     # Undo the normalization (for visualization purposes)
     mean, std = compute_mean_and_std()
@@ -260,7 +259,6 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
 
     images = invTrans(images)
 
-    # YOUR CODE HERE:
     # Get class names from the train data loader
     class_names = data_loaders["train"].dataset.classes  # Third YOUR CODE HERE
 

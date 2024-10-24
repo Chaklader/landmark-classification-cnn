@@ -80,20 +80,44 @@ def setup_env():
 
     return device
 
+# def get_data_location():
+#     """
+#     Find the location of the dataset, either locally or in the Udacity workspace
+#     """
+#
+#     import os
+#
+#     print("Current working directory:", os.getcwd())
+#     print("Does landmark_images exist?", os.path.exists("landmark_images"))
+#     print("Full path to landmark_images:", os.path.abspath("landmark_images"))
+#
+#     # <module 'posixpath' from '/opt/miniconda3/envs/udacity/lib/python3.8/posixpath.py'>
+#     if os.path.exists("landmark_images"):
+#         data_folder = "landmark_images"
+#     elif os.path.exists("/data/DLND/C2/landmark_images"):
+#         data_folder = "/data/DLND/C2/landmark_images"
+#     else:
+#         raise IOError("Please download the dataset first")
+#
+#     return data_folder
+
+
 def get_data_location():
     """
     Find the location of the dataset, either locally or in the Udacity workspace
     """
+    current_dir = os.path.dirname(os.path.abspath(__file__))  # Gets src directory
+    project_dir = os.path.dirname(current_dir)  # Goes up one level to project root
 
-    if os.path.exists("landmark_images"):
-        data_folder = "landmark_images"
+    # Check in project root directory
+    if os.path.exists(os.path.join(project_dir, "landmark_images")):
+        data_folder = os.path.join(project_dir, "landmark_images")
     elif os.path.exists("/data/DLND/C2/landmark_images"):
         data_folder = "/data/DLND/C2/landmark_images"
     else:
         raise IOError("Please download the dataset first")
 
     return data_folder
-
 
 def download_and_extract(
     url="https://udacity-dlnfd.s3-us-west-1.amazonaws.com/datasets/landmark_images.zip",

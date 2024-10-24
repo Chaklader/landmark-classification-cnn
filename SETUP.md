@@ -3,6 +3,8 @@
 ```textmate
 conda create --name udacity python=3.8 pytorch torchvision torchaudio -c pytorch
 python -m ipykernel install --user --name=udacity
+
+python -m ipykernel install --user --name udacity --display-name "Python (udacity)"
 ```
 
 Yes, you can set the kernel for specific notebooks using the terminal with jupyter command. Here's how:
