@@ -15,20 +15,57 @@ import numpy as np
 import random
 
 
+# def setup_env():
+#     use_cuda = torch.cuda.is_available()
+#
+#     if use_cuda:
+#         print("GPU available")
+#     else:
+#         print("GPU *NOT* available. Will use CPU (slow)")
+#
+#     # Seed random generator for repeatibility
+#     seed = 42
+#     random.seed(seed)
+#     np.random.seed(seed)
+#     torch.manual_seed(seed)
+#     torch.cuda.manual_seed_all(seed)
+#
+#     # Download data if not present already
+#     download_and_extract()
+#     compute_mean_and_std()
+#
+#     # Make checkpoints subdir if not existing
+#     os.makedirs("checkpoints", exist_ok=True)
+#
+#     # Make sure we can reach the installed binaries. This is needed for the workspace
+#     if os.path.exists("/data/DLND/C2/landmark_images"):
+#         os.environ['PATH'] = f"{os.environ['PATH']}:/root/.local/bin"
+
+
+
+# modified setup_env function that checks for both MPS and CUDA support
 def setup_env():
+    # Check for MPS (Apple Silicon) first
+    use_mps = torch.backends.mps.is_available()
     use_cuda = torch.cuda.is_available()
 
-    if use_cuda:
-        print("GPU available")
+    if use_mps:
+        print("MPS (Apple Silicon GPU) available - will use MPS")
+        device = torch.device("mps")
+    elif use_cuda:
+        print("CUDA GPU available - will use CUDA")
+        device = torch.device("cuda")
     else:
-        print("GPU *NOT* available. Will use CPU (slow)")
+        print("Neither MPS nor CUDA GPU available. Will use CPU (slow)")
+        device = torch.device("cpu")
 
     # Seed random generator for repeatibility
     seed = 42
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if use_cuda:
+        torch.cuda.manual_seed_all(seed)
 
     # Download data if not present already
     download_and_extract()
@@ -36,11 +73,12 @@ def setup_env():
 
     # Make checkpoints subdir if not existing
     os.makedirs("checkpoints", exist_ok=True)
-    
+
     # Make sure we can reach the installed binaries. This is needed for the workspace
     if os.path.exists("/data/DLND/C2/landmark_images"):
         os.environ['PATH'] = f"{os.environ['PATH']}:/root/.local/bin"
 
+    return device
 
 def get_data_location():
     """
