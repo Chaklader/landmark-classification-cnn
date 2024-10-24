@@ -8,44 +8,129 @@ from tqdm import tqdm
 from src.helpers import after_subplot
 
 
+# def train_one_epoch(train_dataloader, model, optimizer, loss):
+#     """
+#     Performs one train_one_epoch epoch
+#     """
+#
+#     if torch.cuda.is_available():
+#         # YOUR CODE HERE: transfer the model to the GPU
+#         # HINT: use .cuda()
+#
+#     # YOUR CODE HERE: set the model to training mode
+#
+#     train_loss = 0.0
+#
+#     for batch_idx, (data, target) in tqdm(
+#         enumerate(train_dataloader),
+#         desc="Training",
+#         total=len(train_dataloader),
+#         leave=True,
+#         ncols=80,
+#     ):
+#         # move data to GPU
+#         if torch.cuda.is_available():
+#             data, target = data.cuda(), target.cuda()
+#
+#         # 1. clear the gradients of all optimized variables
+#         # YOUR CODE HERE:
+#         # 2. forward pass: compute predicted outputs by passing inputs to the model
+#         output  = # YOUR CODE HERE
+#         # 3. calculate the loss
+#         loss_value  = # YOUR CODE HERE
+#         # 4. backward pass: compute gradient of the loss with respect to model parameters
+#         # YOUR CODE HERE:
+#         # 5. perform a single optimization step (parameter update)
+#         # YOUR CODE HERE:
+#
+#         # update average training loss
+#         train_loss = train_loss + (
+#             (1 / (batch_idx + 1)) * (loss_value.data.item() - train_loss)
+#         )
+#
+#     return train_loss
+#
+#
+# def valid_one_epoch(valid_dataloader, model, loss):
+#     """
+#     Validate at the end of one epoch
+#     """
+#
+#     with torch.no_grad():
+#
+#         # set the model to evaluation mode
+#         # YOUR CODE HERE
+#
+#         if torch.cuda.is_available():
+#             model.cuda()
+#
+#         valid_loss = 0.0
+#         for batch_idx, (data, target) in tqdm(
+#             enumerate(valid_dataloader),
+#             desc="Validating",
+#             total=len(valid_dataloader),
+#             leave=True,
+#             ncols=80,
+#         ):
+#             # move data to GPU
+#             if torch.cuda.is_available():
+#                 data, target = data.cuda(), target.cuda()
+#
+#             # 1. forward pass: compute predicted outputs by passing inputs to the model
+#             output  = # YOUR CODE HERE
+#             # 2. calculate the loss
+#             loss_value  = # YOUR CODE HERE
+#
+#             # Calculate average validation loss
+#             valid_loss = valid_loss + (
+#                 (1 / (batch_idx + 1)) * (loss_value.data.item() - valid_loss)
+#             )
+#
+#     return valid_loss
+
+
 def train_one_epoch(train_dataloader, model, optimizer, loss):
     """
     Performs one train_one_epoch epoch
     """
 
     if torch.cuda.is_available():
-        # YOUR CODE HERE: transfer the model to the GPU
-        # HINT: use .cuda()
+        model = model.cuda()
 
-    # YOUR CODE HERE: set the model to training mode
-    
+    model.train()
+
     train_loss = 0.0
 
-    for batch_idx, (data, target) in tqdm(
-        enumerate(train_dataloader),
-        desc="Training",
-        total=len(train_dataloader),
-        leave=True,
-        ncols=80,
-    ):
+    # Fix the tqdm enumeration
+    for batch_idx, (data, target) in enumerate(tqdm(
+            train_dataloader,
+            desc="Training",
+            total=len(train_dataloader),
+            leave=True,
+            ncols=80,
+    )):
         # move data to GPU
         if torch.cuda.is_available():
             data, target = data.cuda(), target.cuda()
 
-        # 1. clear the gradients of all optimized variables
-        # YOUR CODE HERE:
-        # 2. forward pass: compute predicted outputs by passing inputs to the model
-        output  = # YOUR CODE HERE
+        # 1. clear the gradients
+        optimizer.zero_grad()
+
+        # 2. forward pass
+        output = model(data)
+
         # 3. calculate the loss
-        loss_value  = # YOUR CODE HERE
-        # 4. backward pass: compute gradient of the loss with respect to model parameters
-        # YOUR CODE HERE:
-        # 5. perform a single optimization step (parameter update)
-        # YOUR CODE HERE:
+        loss_value = loss(output, target)
+
+        # 4. backward pass
+        loss_value.backward()
+
+        # 5. perform optimization step
+        optimizer.step()
 
         # update average training loss
         train_loss = train_loss + (
-            (1 / (batch_idx + 1)) * (loss_value.data.item() - train_loss)
+                (1 / (batch_idx + 1)) * (loss_value.data.item() - train_loss)
         )
 
     return train_loss
@@ -55,41 +140,99 @@ def valid_one_epoch(valid_dataloader, model, loss):
     """
     Validate at the end of one epoch
     """
-
     with torch.no_grad():
-
-        # set the model to evaluation mode
-        # YOUR CODE HERE
+        # Set model to evaluation mode
+        model.eval()
 
         if torch.cuda.is_available():
             model.cuda()
 
         valid_loss = 0.0
-        for batch_idx, (data, target) in tqdm(
-            enumerate(valid_dataloader),
-            desc="Validating",
-            total=len(valid_dataloader),
-            leave=True,
-            ncols=80,
-        ):
+        for batch_idx, (data, target) in enumerate(tqdm(
+                valid_dataloader,
+                desc="Validating",
+                total=len(valid_dataloader),
+                leave=True,
+                ncols=80
+        )):
             # move data to GPU
             if torch.cuda.is_available():
                 data, target = data.cuda(), target.cuda()
 
-            # 1. forward pass: compute predicted outputs by passing inputs to the model
-            output  = # YOUR CODE HERE
+            # 1. forward pass
+            output = model(data)
+
             # 2. calculate the loss
-            loss_value  = # YOUR CODE HERE
+            loss_value = loss(output, target)
 
             # Calculate average validation loss
             valid_loss = valid_loss + (
-                (1 / (batch_idx + 1)) * (loss_value.data.item() - valid_loss)
+                    (1 / (batch_idx + 1)) * (loss_value.data.item() - valid_loss)
             )
 
     return valid_loss
 
 
+# def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
+#     # initialize tracker for minimum validation loss
+#     if interactive_tracking:
+#         liveloss = PlotLosses(outputs=[MatplotlibPlot(after_subplot=after_subplot)])
+#     else:
+#         liveloss = None
+#
+#     valid_loss_min = None
+#     logs = {}
+#
+#     # Learning rate scheduler: setup a learning rate scheduler that
+#     # reduces the learning rate when the validation loss reaches a
+#     # plateau
+#     # HINT: look here:
+#     # https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+#     scheduler  = # YOUR CODE HERE
+#
+#     for epoch in range(1, n_epochs + 1):
+#
+#         train_loss = train_one_epoch(
+#             data_loaders["train"], model, optimizer, loss
+#         )
+#
+#         valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
+#
+#         # print training/validation statistics
+#         print(
+#             "Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}".format(
+#                 epoch, train_loss, valid_loss
+#             )
+#         )
+#
+#         # If the validation loss decreases by more than 1%, save the model
+#         if valid_loss_min is None or (
+#                 (valid_loss_min - valid_loss) / valid_loss_min > 0.01
+#         ):
+#             print(f"New minimum validation loss: {valid_loss:.6f}. Saving model ...")
+#
+#             # Save the weights to save_path
+#             # YOUR CODE HERE
+#
+#             valid_loss_min = valid_loss
+#
+#         # Update learning rate, i.e., make a step in the learning rate scheduler
+#         # YOUR CODE HERE
+#
+#         # Log the losses and the current learning rate
+#         if interactive_tracking:
+#             logs["loss"] = train_loss
+#             logs["val_loss"] = valid_loss
+#             logs["lr"] = optimizer.param_groups[0]["lr"]
+#
+#             liveloss.update(logs)
+#             liveloss.send()
+
+
 def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
+    """
+    Optimize the model and save the best version based on validation loss improvement.
+    """
     # initialize tracker for minimum validation loss
     if interactive_tracking:
         liveloss = PlotLosses(outputs=[MatplotlibPlot(after_subplot=after_subplot)])
@@ -102,19 +245,23 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
     # Learning rate scheduler: setup a learning rate scheduler that
     # reduces the learning rate when the validation loss reaches a
     # plateau
-    # HINT: look here: 
-    # https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
-    scheduler  = # YOUR CODE HERE
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode='min',  # Reduce LR when metric stops decreasing
+        factor=0.1,  # Multiply LR by this factor
+        patience=10,  # Number of epochs with no improvement after which LR will be reduced
+        verbose=True  # Print message when LR is reduced
+    )
 
     for epoch in range(1, n_epochs + 1):
-
+        # Train and validate for one epoch
         train_loss = train_one_epoch(
             data_loaders["train"], model, optimizer, loss
         )
 
         valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
 
-        # print training/validation statistics
+        # Print training/validation statistics
         print(
             "Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}".format(
                 epoch, train_loss, valid_loss
@@ -128,12 +275,11 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
             print(f"New minimum validation loss: {valid_loss:.6f}. Saving model ...")
 
             # Save the weights to save_path
-            # YOUR CODE HERE
-
+            torch.save(model.state_dict(), save_path)
             valid_loss_min = valid_loss
 
-        # Update learning rate, i.e., make a step in the learning rate scheduler
-        # YOUR CODE HERE
+        # Update learning rate based on validation loss
+        scheduler.step(valid_loss)
 
         # Log the losses and the current learning rate
         if interactive_tracking:
@@ -145,7 +291,68 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
             liveloss.send()
 
 
+# def one_epoch_test(test_dataloader, model, loss):
+#     # monitor test loss and accuracy
+#     test_loss = 0.
+#     correct = 0.
+#     total = 0.
+#
+#     # set the module to evaluation mode
+#     with torch.no_grad():
+#
+#         # set the model to evaluation mode
+#         # YOUR CODE HERE
+#
+#         if torch.cuda.is_available():
+#             model = model.cuda()
+#
+#         for batch_idx, (data, target) in tqdm(
+#                 enumerate(test_dataloader),
+#                 desc='Testing',
+#                 total=len(test_dataloader),
+#                 leave=True,
+#                 ncols=80
+#         ):
+#             # move data to GPU
+#             if torch.cuda.is_available():
+#                 data, target = data.cuda(), target.cuda()
+#
+#             # 1. forward pass: compute predicted outputs by passing inputs to the model
+#             logits  = # YOUR CODE HERE
+#             # 2. calculate the loss
+#             loss_value  = # YOUR CODE HERE
+#
+#             # update average test loss
+#             test_loss = test_loss + ((1 / (batch_idx + 1)) * (loss_value.data.item() - test_loss))
+#
+#             # convert logits to predicted class
+#             # HINT: the predicted class is the index of the max of the logits
+#             pred  = # YOUR CODE HERE
+#
+#             # compare predictions to true label
+#             correct += torch.sum(torch.squeeze(pred.eq(target.data.view_as(pred))).cpu())
+#             total += data.size(0)
+#
+#     print('Test Loss: {:.6f}\n'.format(test_loss))
+#
+#     print('\nTest Accuracy: %2d%% (%2d/%2d)' % (
+#         100. * correct / total, correct, total))
+#
+#     return test_loss
+
+
 def one_epoch_test(test_dataloader, model, loss):
+    """
+    Test the model for one epoch.
+
+    Args:
+        test_dataloader: DataLoader for test data
+        model: the trained model
+        loss: loss function
+
+    Returns:
+        test_loss: average test loss
+    """
     # monitor test loss and accuracy
     test_loss = 0.
     correct = 0.
@@ -155,33 +362,33 @@ def one_epoch_test(test_dataloader, model, loss):
     with torch.no_grad():
 
         # set the model to evaluation mode
-        # YOUR CODE HERE
+        model.eval()
 
         if torch.cuda.is_available():
             model = model.cuda()
 
-        for batch_idx, (data, target) in tqdm(
-                enumerate(test_dataloader),
+        for batch_idx, (data, target) in enumerate(tqdm(
+                test_dataloader,
                 desc='Testing',
                 total=len(test_dataloader),
                 leave=True,
                 ncols=80
-        ):
+        )):
             # move data to GPU
             if torch.cuda.is_available():
                 data, target = data.cuda(), target.cuda()
 
             # 1. forward pass: compute predicted outputs by passing inputs to the model
-            logits  = # YOUR CODE HERE
+            logits = model(data)
+
             # 2. calculate the loss
-            loss_value  = # YOUR CODE HERE
+            loss_value = loss(logits, target)
 
             # update average test loss
             test_loss = test_loss + ((1 / (batch_idx + 1)) * (loss_value.data.item() - test_loss))
 
             # convert logits to predicted class
-            # HINT: the predicted class is the index of the max of the logits
-            pred  = # YOUR CODE HERE
+            pred = torch.argmax(logits, dim=1)
 
             # compare predictions to true label
             correct += torch.sum(torch.squeeze(pred.eq(target.data.view_as(pred))).cpu())
@@ -195,7 +402,6 @@ def one_epoch_test(test_dataloader, model, loss):
     return test_loss
 
 
-    
 ######################################################################################
 #                                     TESTS
 ######################################################################################
@@ -220,7 +426,6 @@ def optim_objects():
 
 
 def test_train_one_epoch(data_loaders, optim_objects):
-
     model, loss, optimizer = optim_objects
 
     for _ in range(2):
@@ -229,15 +434,14 @@ def test_train_one_epoch(data_loaders, optim_objects):
 
 
 def test_valid_one_epoch(data_loaders, optim_objects):
-
     model, loss, optimizer = optim_objects
 
     for _ in range(2):
         lv = valid_one_epoch(data_loaders["valid"], model, loss)
         assert not np.isnan(lv), "Validation loss is nan"
 
-def test_optimize(data_loaders, optim_objects):
 
+def test_optimize(data_loaders, optim_objects):
     model, loss, optimizer = optim_objects
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -245,7 +449,6 @@ def test_optimize(data_loaders, optim_objects):
 
 
 def test_one_epoch_test(data_loaders, optim_objects):
-
     model, loss, optimizer = optim_objects
 
     tv = one_epoch_test(data_loaders["test"], model, loss)
