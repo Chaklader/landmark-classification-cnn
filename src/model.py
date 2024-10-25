@@ -53,9 +53,9 @@ class MyModel(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # YOUR CODE HERE: process the input tensor through the
-        # feature extractor, the pooling and the final linear
-        # layers (if appropriate for the architecture chosen)
+        # process the input tensor through the feature extractor,
+        # the pooling and the final linear layers (if appropriate
+        # for the architecture chosen)
         x = self.features(x)
         x = self.classifier(x)
         return x

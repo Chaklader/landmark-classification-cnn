@@ -9,38 +9,9 @@ from tqdm import tqdm
 import multiprocessing
 import matplotlib.pyplot as plt
 
-
 # Let's see if we have an available GPU
 import numpy as np
 import random
-
-
-# def setup_env():
-#     use_cuda = torch.cuda.is_available()
-#
-#     if use_cuda:
-#         print("GPU available")
-#     else:
-#         print("GPU *NOT* available. Will use CPU (slow)")
-#
-#     # Seed random generator for repeatibility
-#     seed = 42
-#     random.seed(seed)
-#     np.random.seed(seed)
-#     torch.manual_seed(seed)
-#     torch.cuda.manual_seed_all(seed)
-#
-#     # Download data if not present already
-#     download_and_extract()
-#     compute_mean_and_std()
-#
-#     # Make checkpoints subdir if not existing
-#     os.makedirs("checkpoints", exist_ok=True)
-#
-#     # Make sure we can reach the installed binaries. This is needed for the workspace
-#     if os.path.exists("/data/DLND/C2/landmark_images"):
-#         os.environ['PATH'] = f"{os.environ['PATH']}:/root/.local/bin"
-
 
 
 # modified setup_env function that checks for both MPS and CUDA support
@@ -80,27 +51,6 @@ def setup_env():
 
     return device
 
-# def get_data_location():
-#     """
-#     Find the location of the dataset, either locally or in the Udacity workspace
-#     """
-#
-#     import os
-#
-#     print("Current working directory:", os.getcwd())
-#     print("Does landmark_images exist?", os.path.exists("landmark_images"))
-#     print("Full path to landmark_images:", os.path.abspath("landmark_images"))
-#
-#     # <module 'posixpath' from '/opt/miniconda3/envs/udacity/lib/python3.8/posixpath.py'>
-#     if os.path.exists("landmark_images"):
-#         data_folder = "landmark_images"
-#     elif os.path.exists("/data/DLND/C2/landmark_images"):
-#         data_folder = "/data/DLND/C2/landmark_images"
-#     else:
-#         raise IOError("Please download the dataset first")
-#
-#     return data_folder
-
 
 def get_data_location():
     """
@@ -119,14 +69,14 @@ def get_data_location():
 
     return data_folder
 
+
 def download_and_extract(
-    url="https://udacity-dlnfd.s3-us-west-1.amazonaws.com/datasets/landmark_images.zip",
+        url="https://udacity-dlnfd.s3-us-west-1.amazonaws.com/datasets/landmark_images.zip",
 ):
-    
     try:
-        
+
         location = get_data_location()
-    
+
     except IOError:
         # Dataset does not exist
         print(f"Downloading and unzipping {url}. This will take a while...")
@@ -134,13 +84,12 @@ def download_and_extract(
         with urllib.request.urlopen(url) as resp:
 
             with ZipFile(BytesIO(resp.read())) as fp:
-
                 fp.extractall(".")
 
         print("done")
-                
+
     else:
-        
+
         print(
             "Dataset already downloaded. If you need to re-download, "
             f"please delete the directory {location}"
