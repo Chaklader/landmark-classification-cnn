@@ -242,67 +242,280 @@ def valid_one_epoch(valid_dataloader, model, loss):
 #             liveloss.send()
 
 
+# def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
+#     """
+#     Optimize the model and save the best version based on validation loss improvement.
+#     """
+#     # initialize tracker for minimum validation loss
+#     if interactive_tracking:
+#         liveloss = PlotLosses(outputs=[MatplotlibPlot(after_subplot=after_subplot)])
+#     else:
+#         liveloss = None
+#
+#     valid_loss_min = None
+#     logs = {}
+#
+#     # Learning rate scheduler: setup a learning rate scheduler that
+#     # reduces the learning rate when the validation loss reaches a
+#     # plateau
+#     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+#         optimizer,
+#         mode='min',  # Reduce LR when metric stops decreasing
+#         factor=0.1,  # Multiply LR by this factor
+#         patience=10,  # Number of epochs with no improvement after which LR will be reduced
+#         verbose=True  # Print message when LR is reduced
+#     )
+#
+#     for epoch in range(1, n_epochs + 1):
+#         # Train and validate for one epoch
+#         train_loss = train_one_epoch(
+#             data_loaders["train"], model, optimizer, loss
+#         )
+#
+#         valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
+#
+#         # Print training/validation statistics
+#         print(
+#             "Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}".format(
+#                 epoch, train_loss, valid_loss
+#             )
+#         )
+#
+#         # If the validation loss decreases by more than 1%, save the model
+#         if valid_loss_min is None or (
+#                 (valid_loss_min - valid_loss) / valid_loss_min > 0.01
+#         ):
+#             print(f"New minimum validation loss: {valid_loss:.6f}. Saving model ...")
+#
+#             # Save the weights to save_path
+#             torch.save(model.state_dict(), save_path)
+#             valid_loss_min = valid_loss
+#
+#         # Update learning rate based on validation loss
+#         scheduler.step(valid_loss)
+#
+#         # Log the losses and the current learning rate
+#         if interactive_tracking:
+#             logs["loss"] = train_loss
+#             logs["val_loss"] = valid_loss
+#             logs["lr"] = optimizer.param_groups[0]["lr"]
+#
+#             liveloss.update(logs)
+#             liveloss.send()
+
+# def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
+#     if torch.backends.mps.is_available():
+#         device = torch.device("mps")
+#     elif torch.cuda.is_available():
+#         device = torch.device("cuda")
+#     else:
+#         device = torch.device("cpu")
+#
+#     print(f"\nStarting Training on device: {device}")
+#     model = model.to(device)
+#
+#     if interactive_tracking:
+#         liveloss = PlotLosses(outputs=[MatplotlibPlot(after_subplot=after_subplot)])
+#     else:
+#         liveloss = None
+#
+#     valid_loss_min = None
+#     best_accuracy = 0.0
+#     logs = {}
+#
+#     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+#         optimizer,
+#         mode='min',
+#         factor=0.1,
+#         patience=10,
+#         verbose=True
+#     )
+#
+#     print("\nStarting Training Loop...")
+#     print("=" * 80)
+#
+#     for epoch in range(1, n_epochs + 1):
+#         print(f"\n[Epoch {epoch}/{n_epochs}] Starting training phase...")
+#         train_loss = train_one_epoch(data_loaders["train"], model, optimizer, loss)
+#
+#         print(f"[Epoch {epoch}/{n_epochs}] Starting validation phase...")
+#         valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
+#
+#         correct = 0
+#         total = 0
+#         model.eval()
+#         with torch.no_grad():
+#             for data, target in data_loaders["valid"]:
+#                 data, target = data.to(device), target.to(device)
+#                 outputs = model(data)
+#                 _, predicted = torch.max(outputs.data, 1)
+#                 total += target.size(0)
+#                 correct += (predicted == target).sum().item()
+#
+#         accuracy = 100 * correct / total
+#
+#         print(f"\n[Epoch {epoch}/{n_epochs}] Results:")
+#         print(f"[Epoch {epoch}/{n_epochs}] Training Loss:       {train_loss:.6f}")
+#         print(f"[Epoch {epoch}/{n_epochs}] Validation Loss:     {valid_loss:.6f}")
+#         print(f"[Epoch {epoch}/{n_epochs}] Validation Accuracy: {accuracy:.2f}%")
+#         print("-" * 80)
+#
+#         if (valid_loss_min is None or
+#                 ((valid_loss_min - valid_loss) / valid_loss_min > 0.01) or
+#                 accuracy > best_accuracy):
+#             print(f"\n[Epoch {epoch}/{n_epochs}] Validation improved!")
+#             print(
+#                 f"[Epoch {epoch}/{n_epochs}] Previous best loss: {valid_loss_min:.6f if valid_loss_min is not None else 'None'}")
+#             print(f"[Epoch {epoch}/{n_epochs}] New loss:          {valid_loss:.6f}")
+#             print(f"[Epoch {epoch}/{n_epochs}] Previous best accuracy: {best_accuracy:.2f}%")
+#             print(f"[Epoch {epoch}/{n_epochs}] New accuracy:          {accuracy:.2f}%")
+#             print(f"[Epoch {epoch}/{n_epochs}] Saving model checkpoint...")
+#
+#             torch.save({
+#                 'epoch': epoch,
+#                 'model_state_dict': model.state_dict(),
+#                 'optimizer_state_dict': optimizer.state_dict(),
+#                 'train_loss': train_loss,
+#                 'valid_loss': valid_loss,
+#                 'accuracy': accuracy
+#             }, save_path)
+#
+#             valid_loss_min = valid_loss
+#             best_accuracy = accuracy
+#
+#         scheduler.step(valid_loss)
+#
+#         if interactive_tracking:
+#             logs["loss"] = train_loss
+#             logs["val_loss"] = valid_loss
+#             logs["val_acc"] = accuracy
+#             logs["lr"] = optimizer.param_groups[0]["lr"]
+#             liveloss.update(logs)
+#             liveloss.send()
+#
+#         print(f"\n[Epoch {epoch}/{n_epochs}] Current Learning Rate: {optimizer.param_groups[0]['lr']}")
+#
+#         if optimizer.param_groups[0]["lr"] < 1e-6:
+#             print(f"\n[Epoch {epoch}/{n_epochs}] Learning rate too small. Stopping training.")
+#             break
+#
+#         print("\n" + "=" * 80)
+#
+#     print("\nTraining completed!")
+#     print(f"Best validation accuracy: {best_accuracy:.2f}%")
+#     print(f"Best validation loss: {valid_loss_min:.6f}")
+#
+#     return model
+
+
 def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
-    """
-    Optimize the model and save the best version based on validation loss improvement.
-    """
-    # initialize tracker for minimum validation loss
+    # Set up device
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
+    print(f"\nStarting Training on device: {device}")
+    model = model.to(device)
+
     if interactive_tracking:
         liveloss = PlotLosses(outputs=[MatplotlibPlot(after_subplot=after_subplot)])
     else:
         liveloss = None
 
     valid_loss_min = None
+    best_accuracy = 0.0
     logs = {}
 
-    # Learning rate scheduler: setup a learning rate scheduler that
-    # reduces the learning rate when the validation loss reaches a
-    # plateau
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
-        mode='min',  # Reduce LR when metric stops decreasing
-        factor=0.1,  # Multiply LR by this factor
-        patience=10,  # Number of epochs with no improvement after which LR will be reduced
-        verbose=True  # Print message when LR is reduced
+        mode='min',
+        factor=0.1,
+        patience=10,
+        verbose=True
     )
 
-    for epoch in range(1, n_epochs + 1):
-        # Train and validate for one epoch
-        train_loss = train_one_epoch(
-            data_loaders["train"], model, optimizer, loss
-        )
+    print("\nStarting Training Loop...")
+    print("=" * 80)
 
+    for epoch in range(1, n_epochs + 1):
+        print(f"\n[Epoch {epoch}/{n_epochs}] Starting training phase...")
+        train_loss = train_one_epoch(data_loaders["train"], model, optimizer, loss)
+
+        print(f"[Epoch {epoch}/{n_epochs}] Starting validation phase...")
         valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
 
-        # Print training/validation statistics
-        print(
-            "Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}".format(
-                epoch, train_loss, valid_loss
-            )
-        )
+        correct = 0
+        total = 0
+        model.eval()
+        with torch.no_grad():
+            for data, target in data_loaders["valid"]:
+                data, target = data.to(device), target.to(device)
+                outputs = model(data)
+                _, predicted = torch.max(outputs.data, 1)
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
 
-        # If the validation loss decreases by more than 1%, save the model
-        if valid_loss_min is None or (
-                (valid_loss_min - valid_loss) / valid_loss_min > 0.01
-        ):
-            print(f"New minimum validation loss: {valid_loss:.6f}. Saving model ...")
+        accuracy = 100 * correct / total
 
-            # Save the weights to save_path
-            torch.save(model.state_dict(), save_path)
+        print(f"\n[Epoch {epoch}/{n_epochs}] Results:")
+        print(f"[Epoch {epoch}/{n_epochs}] Training Loss:       {train_loss:.6f}")
+        print(f"[Epoch {epoch}/{n_epochs}] Validation Loss:     {valid_loss:.6f}")
+        print(f"[Epoch {epoch}/{n_epochs}] Validation Accuracy: {accuracy:.2f}%")
+        print("-" * 80)
+
+        if (valid_loss_min is None or
+                ((valid_loss_min - valid_loss) / valid_loss_min > 0.01) or
+                accuracy > best_accuracy):
+
+            print(f"\n[Epoch {epoch}/{n_epochs}] Validation improved!")
+            # if valid_loss_min is None:
+            #     print(f"[Epoch {epoch}/{n_epochs}] Previous best loss: None")
+            # else:
+            #     print(f"[Epoch {epoch}/{n_epochs}] Previous best loss: {valid_loss_min:.6f}")
+            print(f"[Epoch {epoch}/{n_epochs}] New loss:          {valid_loss:.6f}")
+            print(f"[Epoch {epoch}/{n_epochs}] Previous best accuracy: {best_accuracy:.2f}%")
+            # print(f"[Epoch {epoch}/{n_epochs}] New accuracy:          {accuracy:.2f}%")
+            print(f"[Epoch {epoch}/{n_epochs}] New accuracy:          {accuracy}%")
+            print(f"[Epoch {epoch}/{n_epochs}] Saving model checkpoint...")
+
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'train_loss': train_loss,
+                'valid_loss': valid_loss,
+                'accuracy': accuracy
+            }, save_path)
+
             valid_loss_min = valid_loss
+            best_accuracy = accuracy
 
-        # Update learning rate based on validation loss
         scheduler.step(valid_loss)
 
-        # Log the losses and the current learning rate
         if interactive_tracking:
             logs["loss"] = train_loss
             logs["val_loss"] = valid_loss
+            logs["val_acc"] = accuracy
             logs["lr"] = optimizer.param_groups[0]["lr"]
-
             liveloss.update(logs)
             liveloss.send()
 
+        print(f"\n[Epoch {epoch}/{n_epochs}] Current Learning Rate: {optimizer.param_groups[0]['lr']}")
+
+        if optimizer.param_groups[0]["lr"] < 1e-6:
+            print(f"\n[Epoch {epoch}/{n_epochs}] Learning rate too small. Stopping training.")
+            break
+
+        print("\n" + "=" * 80)
+
+    print("\nTraining completed!")
+    print(f"Best validation accuracy: {best_accuracy:.2f}%")
+    print(f"Best validation loss: {valid_loss_min:.6f}")
+
+    return model
 
 # def one_epoch_test(test_dataloader, model, loss):
 #     # monitor test loss and accuracy
