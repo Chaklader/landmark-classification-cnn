@@ -7800,7 +7800,50 @@ E       RuntimeError: Input type (torch.cuda.FloatTensor) and weight type (torch
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><img alt="&gt;" src="static_images/icons/noun-answer-3361020.png" style="width:25px"/> <strong>Answer</strong>: My code first resizes the image to 256 and then crops to 224. I picked 224 as the input size because it is the recommended input size for using pytorch's pre-trained models. I did decide to augment the dataset via RandAugment, a typical set of augmentations for natural images. I added this augmentation with the goal of improving my model's robustness, thus improving test accuracy.</p>
+<p><img alt="&gt;" src="static_images/icons/noun-answer-3361020.png" style="width:25px"/> <strong>Answer</strong>: the preprocessing pipeline includes:</p>
+<ol>
+<li>Image Resizing:</li>
+</ol>
+<ul>
+<li><p>Images are first resized to 256 pixels using transforms.Resize(256)</p>
+</li>
+<li><p>Then center-cropped to 224×224 using transforms.CenterCrop(224)</p>
+</li>
+<li><p>This 224×224 size was chosen because it's a standard input size used by many modern CNN architectures (like ResNet) and provides a good balance between preserving image detail and computational efficiency</p>
+</li>
+</ul>
+<ol start="2">
+<li>Data Augmentation:</li>
+</ol>
+<p>For training data, several augmentation techniques are applied:</p>
+<ul>
+<li><p>RandomResizedCrop(224): Randomly crops and resizes images to 224×224</p>
+</li>
+<li><p>RandomHorizontalFlip(): Randomly flips images horizontally</p>
+</li>
+<li><p>RandomRotation(10): Applies random rotations up to 10 degrees</p>
+</li>
+<li><p>ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1): Adjusts color properties</p>
+</li>
+</ul>
+<p>These augmentations help:</p>
+<ul>
+<li><p>Increase dataset variety</p>
+</li>
+<li><p>Improve model generalization</p>
+</li>
+<li><p>Make the model more robust to variations in image orientation and lighting conditions</p>
+</li>
+</ul>
+<ol start="3">
+<li>Normalization:</li>
+</ol>
+<ul>
+<li><p>Images are converted to tensors and normalized using computed mean and standard deviation</p>
+</li>
+<li><p>This standardizes the input data and helps with training stability</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -8070,7 +8113,57 @@ src/model.py::test_model_construction
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><img alt="&gt;" src="static_images/icons/noun-answer-3361020.png" style="width:25px"/> <strong>Answer:</strong> I decided to use 5 convolutional layers so that my model could be sufficiently expressive. I used dropout layers to reduce my model's tendency to overfit the training data. I made my model output a 50-dimensional vector to match with the 50 available landmark classes.</p>
+<p><img alt="&gt;" src="static_images/icons/noun-answer-3361020.png" style="width:25px"/> <strong>Answer:</strong> The CNN architecture is developed with these considerations:</p>
+<ol>
+<li>Feature Extractor:</li>
+</ol>
+<ul>
+<li><p>Uses 4 convolutional blocks with increasing feature depths (64→128→256→512)</p>
+</li>
+<li><p>Each block contains:</p>
+<ul>
+<li><p>Conv2D layer with 3×3 kernels and padding</p>
+</li>
+<li><p>BatchNormalization for training stability</p>
+</li>
+<li><p>ReLU activation for non-linearity</p>
+</li>
+<li><p>MaxPooling to reduce spatial dimensions</p>
+</li>
+<li><p>Dropout for regularization (increasing from p/2 to p through the network)</p>
+</li>
+</ul>
+</li>
+</ul>
+<ol start="2">
+<li>Classifier:</li>
+</ol>
+<ul>
+<li><p>Flattens the features</p>
+</li>
+<li><p>Uses a two-layer fully connected network:</p>
+<ul>
+<li><p>First layer: 512<em>14</em>14 → 1024 with ReLU</p>
+</li>
+<li><p>Final layer: 1024 → num_classes</p>
+</li>
+<li><p>Dropout between layers for regularization</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>The architecture follows modern CNN design principles:</p>
+<ul>
+<li><p>Gradually increasing feature channels</p>
+</li>
+<li><p>Regular dimensionality reduction through pooling</p>
+</li>
+<li><p>Heavy regularization (BatchNorm + Dropout)</p>
+</li>
+<li><p>Skip connections were not used but could be a potential improvement</p>
+</li>
+</ul>
+<p>The final architecture balances model capacity with computational efficiency while incorporating strong regularization to prevent overfitting.</p>
 </div>
 </div>
 </div>
@@ -9134,7 +9227,7 @@ Running predictor test...
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>[NbConvertApp] Converting notebook cnn_from_scratch.ipynb to html
 [NbConvertApp] WARNING | Alternative text is missing on 3 image(s).
-[NbConvertApp] Writing 1762138 bytes to cnn_from_scratch.html
+[NbConvertApp] Writing 1762655 bytes to cnn_from_scratch.html
 </pre>
 </div>
 </div>
