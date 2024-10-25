@@ -4854,6 +4854,65 @@ Semantic segmentation: The task of assigning a class to each pixel in an image.
 Dice loss: A useful measure of loss for semantic segmentation derived from the F1 score, which is the geometric mean of
 precision and recall. The Dice loss tends to balance precision and recall at the pixel level.
 
+
+
+A confusion matrix is a table/visualization that shows how well a classification model performs. For example, in a binary classification (2 classes):
+
+```
+Actual/Predicted |  Class 0  |  Class 1
+----------------------------------------
+Class 0         |    TN     |    FP
+Class 1         |    FN     |    TP
+```
+
+Where:
+- TN (True Negatives): Correctly predicted as Class 0
+- FP (False Positives): Incorrectly predicted as Class 1
+- FN (False Negatives): Incorrectly predicted as Class 0
+- TP (True Positives): Correctly predicted as Class 1
+
+In your case, with 50 classes, it's a 50x50 matrix where:
+- Rows represent actual classes
+- Columns represent predicted classes
+- Each cell shows how many times class i was predicted as class j
+- Diagonal elements (i=j) show correct predictions
+- Off-diagonal elements show mistakes
+
+The plot_confusion_matrix function visualizes this using colors:
+- Darker colors: More predictions in that cell
+- Lighter colors: Fewer predictions
+- Perfect model would have dark diagonal, light everywhere else
+
+This helps you understand:
+1. Which classes are confused for each other
+2. Where your model makes most mistakes
+3. If certain classes are particularly problematic
+
+
+Actually, in PyTorch's convention:
+
+```
+plot_confusion_matrix(pred, truth)
+```
+
+- Columns (x-axis) are the actual/true classes
+- Rows (y-axis) are the predicted classes
+
+So:
+- Reading a column tells you: "When it was actually class X, what did the model predict?"
+- Reading a row tells you: "When the model predicted class Y, what was the actual class?"
+
+For example, if element [i,j] = 5, it means:
+- The model predicted class i
+- But it was actually class j
+- This happened 5 times
+
+So to fix my earlier explanation:
+1. Rows = What model predicted
+2. Columns = What it actually was
+3. Diagonal = Correct predictions (prediction matches reality)
+4. Off-diagonal = Mistakes
+
 –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 ## Project Overview
