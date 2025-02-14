@@ -1,6 +1,19 @@
-# CNN CONCEPTS
+# Convolutional Neural Networks
 
-### Course: CS231n Convolutional Neural Networks for Visual Recognition | Stanford University
+<br>
+<br>
+
+
+# C-3: CNNs in Depth
+# C-4: Transfer Learning
+# C-5: Autoencoders
+# C-6: Object Detection and Segmentation
+
+
+# C-2: CNN Concepts
+
+<br>
+<br>
 
 1. Introduction to CNNs and basic concepts
 
