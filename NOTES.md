@@ -2470,60 +2470,38 @@ deeper and more powerful networks.
 
 ### Fixed Input Size and Global Average Pooling (GAP)
 
-Size of the Input Image for CNNs
-
 A classic CNN has a first section comprised of several layers of convolutions and pooling, followed by a flattening and
-then one or more fully-connected layers.
-
-Convolutional and pooling layers can handle any input size (they will just produce outputs of different size depending
-on
-the input size). However, fully-connected layers can only work with an input array of a specific size. Therefore, the
-vector
-produced by the flattening operation must have a specific number of elements, because it feeds into the fully-connected
-layers.
+then one or more fully-connected layers. Convolutional and pooling layers can handle any input size (they will just produce outputs of different size depending on the input size). However, fully-connected layers can only work with an input array of a specific size. Therefore, the vector produced by the flattening operation must have a specific number of elements, because it feeds into the fully-connected layers.
 
 Let's call this number of elements H. This means that the feature maps that are being flattened must have a specific
-size,
-so that n_channels x height x width = H. Since the height and width of the last feature maps are determined by the size
-of
-the input image, as it flows through the convolutional and the pooling layers, this constraint on the vector produced by
+size, so that n_channels x height x width = H. Since the height and width of the last feature maps are determined by the size
+of the input image, as it flows through the convolutional and the pooling layers, this constraint on the vector produced by
 the flattening operation translates to a constraint on the size of the input image. Therefore, for CNNs using flattening
 layers, the input size must be decided a priori when designing the architecture.
+
+<br>
 
 ### Global Average Pooling (GAP) Layer
 
 We can now introduce a new pooling layer that is widely used in modern CNNs. This type of pooling is equivalent to
-average
-pooling, but the average is taken over the entire feature map. It is equivalent to an Average Pooling Layer with the
-window
-size equal to the input size.
+average pooling, but the average is taken over the entire feature map. It is equivalent to an Average Pooling Layer with the
+window size equal to the input size.
 
 This layer becomes very interesting because it can be used in place of the flattening operation at the end of the
-convolutional
-part of a CNN. Instead of taking the last feature maps and flattening them into a long vector, we take the average of
-each
-feature map and place them in a much shorter vector:
+convolutional part of a CNN. Instead of taking the last feature maps and flattening them into a long vector, we take the average of
+each feature map and place them in a much shorter vector:
 
 <br>
-
-![image info](images/global.png)
-
+<img src="images/global.png" width="600" height=auto/>
 <br>
 
 This drastically reduces the dimensionality of the resulting vector, from n_channels x height x width to just
-n_channels.
-But also, more importantly, it makes the network adaptable to any input size! Let's see how.
+n_channels. But also, more importantly, it makes the network adaptable to any input size! Let's see how.
 
 If we use the GAP layer instead of flattening, we are going to obtain a vector of constant size independent of the size
 of the input image, because the size of the vector after the GAP layer is given by the number of feature maps in the
-last
-convolutional layer, and it is not influenced by their height and width. Therefore, the input image can have any size
-because this will not influence the number of feature maps, but only their height and width.
-
-Note however that a network with GAP trained on a certain image size will not respond well to drastically different
-image
-sizes, even though it will output a result. So effectively the input size became a tunable parameter that can be changed
-without affecting the architecture of the CNN. Many modern architectures adopt the GAP layer.
+last convolutional layer, and it is not influenced by their height and width. Therefore, the input image can have any size
+because this will not influence the number of feature maps, but only their height and width. Note however that a network with GAP trained on a certain image size will not respond well to drastically different image sizes, even though it will output a result. So effectively the input size became a tunable parameter that can be changed without affecting the architecture of the CNN. Many modern architectures adopt the GAP layer.
 
 ## Attention
 
