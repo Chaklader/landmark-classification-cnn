@@ -110,6 +110,30 @@ Suppose we want to use an MLP to classify our image. The problem is, the network
 <img src="images/flat.png" alt="Customer" width="600" height=auto>
 <br>
 
+Normalizing Image Inputs
+
+Data normalization is an important pre-processing step for neural networks. The activation functions that are normally used in neural networks (sigmoid, ReLU, ...) have the highest rate of change around 0:
+
+<br>
+<img src="images/act.png" alt="Customer" width="600" height=auto>
+<br>
+
+
+This means that their derivative is large for inputs that are not too far from 0. Since we train neural networks with gradient descent, the training can proceed faster if the weights stay in the vicinity of where the activation function changes rapidly, i.e., close to 0.
+
+The weights of a neural network are typically initialized with a mean of 0, i.e., some weights are negative and some are positive, but they are in general between -1 and +1, close to 0. Remember that these weights are multiplied with the feature values (in this case the pixel values) and then a bias is added on top before the result is fed to the activation function.
+
+Therefore, if we want the input of the activation function to be somewhere close to 0, we need to start with a number that is close to zero, because two numbers close to zero multiplied together give another number close to zero.
+
+So we need to take the pixels in the input image, which in the case of a grayscale image have values between 0 and 255, and renormalize them to be close to zero.
+
+The easiest way is to just divide the value by 255, thereby changing the pixel values to be between 0 and 1.
+
+In many cases, we go further than that: we compute the mean and the standard deviation of all the pixels in the renormalized dataset, then we subtract the mean and divide by the standard deviation for each image separately. Therefore, our transformed data will contain both negative and positive pixels with mean 0 and standard deviation 1. Sometimes you'll see an approximation here, where we use a mean and standard deviation of 0.5 to center the pixel values. 
+
+
+<br>
+<br>
 
 
 ## Loss Function
