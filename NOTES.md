@@ -491,9 +491,15 @@ As we will see, the main reason for the superiority of CNNs is that MLPs have to
 
 CNNs instead don't need to flatten the image and can therefore immediately exploit the spatial structure. As we will see, through the use of convolution and pooling they also have approximate translation invariance, making them much better choices for image tasks.
 
-# Multilayer Perceptrons (MLPs) vs Convolutional Neural Networks (CNNs)
+<br>
+<br>
 
-## Multilayer Perceptrons (MLPs)
+## Multilayer Perceptrons (MLPs) vs Convolutional Neural Networks (CNNs)
+
+<br>
+<br>
+
+### Multilayer Perceptrons (MLPs)
 
 1. Structure:
     - Consist of fully connected layers
@@ -518,8 +524,6 @@ CNNs instead don't need to flatten the image and can therefore immediately explo
     - Suitable for tabular data, simple pattern recognition
     - Less effective for complex spatial data like images
 
-
-<br>
 <br>
 
 ### Convolutional Neural Networks (CNNs)
@@ -566,6 +570,9 @@ CNNs instead don't need to flatten the image and can therefore immediately explo
     - Image processing tasks
     - Data with spatial or temporal structure
     - When you need to preserve and utilize spatial information
+
+<br>
+<br>
 
 ### Locally-Connected Layers
 
@@ -630,7 +637,10 @@ When the kernel reaches the edges or corners of the image, special handling is r
     - Edge pixels: Extended in lines.
     - Maintains original image size without introducing new values.
 
-## Importance in CNNs
+<br>
+<br>
+
+### Importance in CNNs
 
 - Convolution allows CNNs to detect local patterns and features.
 - Different kernels can detect various features (edges, textures, etc.).
@@ -649,6 +659,9 @@ Kernel convolution relies on centering a pixel and looking at its surrounding ne
 
 <br>
 <img src="images/kernel_convolution.png" alt="Kernel Convolution" width="600" height=auto>
+<br>
+
+<br>
 <br>
 
 #### Question 1:
