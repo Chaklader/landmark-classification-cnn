@@ -825,38 +825,19 @@ By leveraging these concepts, CNNs have revolutionized computer vision tasks, ac
 
 ### Pooling
 
-Pooling is a mechanism often used in CNNs (and in neural networks in general). Pooling compresses information from a
-layer
-by summarizing areas of the feature maps produced in that layer. It works by sliding a window over each feature map,
-just
-like convolution, but instead of applying a kernel we compute a summary statistic (for example the maximum or the mean).
-If we take the maximum within each window, then we call this Max Pooling.
+Pooling is a mechanism often used in CNNs (and in neural networks in general). Pooling compresses information from a layer by summarizing areas of the feature maps produced in that layer. It works by sliding a window over each feature map, just like convolution, but instead of applying a kernel we compute a summary statistic (for example the maximum or the mean). If we take the maximum within each window, then we call this Max Pooling.
 
 <br>
-
-![image info](images/pooling.png)
-
+<img src="images/pooling.png" alt="Pooling" width="600" height=auto>
 <br>
 
 ### Concept Abstraction and Translation Variance
 
-A block consisting of a convolutional layer followed by a max pooling layer (and an activation function) is the typical
-building block of a CNN.
-
-By combining multiple such blocks, the network learns to extract more and more complex information from the image.
-
-Moreover, combining multiple blocks allows the network to achieve translation invariance, meaning it will be able to
-recognize the presence of an object wherever that object is translated within the image.
+A block consisting of a convolutional layer followed by a max pooling layer (and an activation function) is the typical building block of a CNN. By combining multiple such blocks, the network learns to extract more and more complex information from the image. Moreover, combining multiple blocks allows the network to achieve translation invariance, meaning it will be able to recognize the presence of an object wherever that object is translated within the image.
 
 ### Effective Receptive Fields in CNNs
 
-The Effective Receptive Field (ERF) in Convolutional Neural Networks refers to the area of the input image that
-influences
-a particular neuron in a deeper layer of the network. While the theoretical receptive field might be large, the
-effective
-area that significantly impacts the neuron's output is often smaller and has a Gaussian-like distribution of influence.
-
-Key points:
+The Effective Receptive Field (ERF) in Convolutional Neural Networks refers to the area of the input image that influences a particular neuron in a deeper layer of the network. While the theoretical receptive field might be large, the effective area that significantly impacts the neuron's output is often smaller and has a Gaussian-like distribution of influence. Key points:
 
 1. As we go deeper into the network, each neuron indirectly sees a larger portion of the input image.
 2. Not all pixels in the theoretical receptive field contribute equally to the neuron's output.
@@ -864,110 +845,105 @@ Key points:
 4. The shape of the ERF is often Gaussian-like, with influence decreasing from the center outwards.
 5. ERFs evolve during training, potentially becoming more focused or spread out.
 
-## I. Introduction to Receptive Fields
+<br>
+<br>
 
-A. Definition: The region in the input space that influences a particular CNN feature.
+## Receptive Fields
 
-B. Theoretical vs. Effective Receptive Field
+The region in the input space that influences a particular CNN feature called the **effective receptive field** (ERF). It is a measure of how much a given pixel in the input image influences the output of a given feature map in a CNN. 
+
+### Theoretical vs. Effective Receptive Field
 
 1. Theoretical: The entire input area that could potentially influence the feature
 2. Effective: The area that actually has significant influence on the feature
 
-## II. Characteristics of Effective Receptive Fields
 
-A. Shape and Distribution
+## Characteristics of Effective Receptive Fields
+
+### Shape and Distribution
 
 1. Gaussian-like distribution of influence
 2. Center pixels have more impact than edge pixels
 
-B. Size
+### Size
 
 1. Grows larger in deeper layers of the network
 2. Affected by kernel size, stride, and network depth
 
-C. Dynamic Nature
+### Dynamic Nature
 
 1. ERFs evolve during network training
 2. Can become more focused or spread out based on the task
 
-## III. Calculation and Visualization
+<br>
+<br>
 
-A. Methods for calculating ERF
+## Calculation and Visualization
+
+### Methods for calculating ERF
 
 1. Gradient-based approaches
 2. Deconvolution techniques
 
-B. Visualization techniques
+### Visualization techniques
 
 1. Heat maps showing pixel influence
 2. Overlays on input images to demonstrate ERF size and shape
 
-## IV. Importance in CNN Architecture
 
-A. Feature hierarchies
+## Importance in CNN Architecture
+
+### Feature hierarchies
 
 1. Shallow layers: small ERFs, local features
 2. Deep layers: large ERFs, global features
 
-B. Network design considerations
+### Network design considerations
 
 1. Balancing ERF size with computational efficiency
 2. Ensuring appropriate ERF growth through the network
 
-## V. Impact on CNN Performance
+## Impact on CNN Performance
 
-A. Object detection and localization
+### Object detection and localization
 
 1. ERFs affect the network's ability to capture context
 2. Influence on the scale of objects that can be detected
 
-B. Image classification
+### Image classification
 
 1. Role in capturing both local and global features
 2. Importance for handling different scales of input
 
-## VI. Advanced Concepts
+<br>
+<br>
 
-A. Dilated/Atrous convolutions
+## Advanced Concepts
+
+### Dilated/Atrous convolutions
 
 1. Technique to increase ERF without increasing parameters
 2. Applications in semantic segmentation
 
-B. Attention mechanisms
+### Attention mechanisms
 
 1. Dynamic adjustment of ERFs
 2. Allowing the network to focus on relevant parts of the input
 
-By understanding Effective Receptive Fields, we gain insights into how CNNs process information and how to design more
-effective architectures for various computer vision tasks.
-
-The concept of receptive field is that a pixel in the feature map of a deep layer is computed using information that
-originates
-from a large area of the input image, although it is mediated by other layers:
+By understanding Effective Receptive Fields, we gain insights into how CNNs process information and how to design more effective architectures for various computer vision tasks. The concept of receptive field is that a pixel in the feature map of a deep layer is computed using information that originates from a large area of the input image, although it is mediated by other layers:
 
 <br>
+<img src="images/effective.png" alt="Receptive Field" width="600" height=auto>
+<br>
 
-![image info](images/effective.png)
-
+<br>
 <br>
 
 
+In practice things are a bit more complicated. When we compute the effective receptive field, instead of considering just whether the information contained in a given pixel is used or not by a pixel in a deeper layer, we can consider how many times that pixel is used. In other words, how many times that pixel was part of a convolution that ended up in a result used by the pixel in the deeper layer. Of course, pixels on the border of the input image are used during fewer convolutions than pixels in the center of the image. We can take this even further and ask how much a given pixel in the input image influences the pixel in a feature map deeper in the network. This means, if we change the value of the input pixel slightly, how much does the pixel in the deep layer change. If we take this into account, we end up with receptive fields that are more Gaussian-like, instead of flat as we have simplified them in the video, and they also evolve as we train the network. Visualization of an effective receptive field showing varying pixel influence in a neural network feature map.
 
-
-In practice things are a bit more complicated. When we compute the effective receptive field, instead of considering
-just
-whether the information contained in a given pixel is used or not by a pixel in a deeper layer, we can consider how many
-times that pixel is used. In other words, how many times that pixel was part of a convolution that ended up in a result
-used by the pixel in the deeper layer. Of course, pixels on the border of the input image are used during fewer
-convolutions
-than pixels in the center of the image. We can take this even further and ask how much a given pixel in the input image
-influences the pixel in a feature map deeper in the network. This means, if we change the value of the input pixel
-slightly,
-how much does the pixel in the deep layer change. If we take this into account, we end up with receptive fields that are
-more
-Gaussian-like, instead of flat as we have simplified them in the video, and they also evolve as we train the network.
-Visualization
-of an effective receptive field showing varying pixel influence in a neural network feature map.
+<br>
+<br>
 
 ### CNN Architecture Blueprint
 
