@@ -353,14 +353,14 @@ Non-sequential architectures offer more flexibility and can often capture more c
 
 ## Training a Neural Network in PyTorch
 
-## 1. Loss Function
+### Loss Function
 
 - Specifies what the optimizer will minimize
 - For classification tasks, use Cross Entropy Loss
 - In PyTorch: `nn.CrossEntropyLoss()`
 - Combines softmax and negative log likelihood loss
 
-## 2. Optimizer
+### Optimizer
 
 - Changes network parameters to minimize loss
 - Specify which parameters to modify: typically `model.parameters()`
@@ -368,7 +368,7 @@ Non-sequential architectures offer more flexibility and can often capture more c
 - Common optimizers: SGD, Adam
 - Example: `torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0)`
 
-## 3. Training Loop
+### Training Loop
 
 1. Set number of epochs
 2. Set model to training mode: `model.train()`
@@ -381,51 +381,36 @@ Non-sequential architectures offer more flexibility and can often capture more c
    f. Optimize: `optimizer.step()`
    g. Update running loss
 
-## 4. Important Notes
+### Important Notes
 
 - CrossEntropyLoss applies softmax internally
 - Model output should be unnormalized class scores, not probabilities
 - Alternative: Use `F.log_softmax()` in model's forward method and `nn.NLLLoss()`
 - Consider adding softmax to model's forward method for inference after training
 
-## 5. Monitoring Progress
+### Monitoring Progress
 
 - Use tqdm for progress bars during training
 - Calculate and print average loss per epoch
 
-## 6. Validation
+### Model Validation
 
 - Perform validation after each training epoch
 - Set model to evaluation mode for validation: `model.eval()`
 
-Remember: The goal is to minimize the loss function by adjusting the model's parameters through multiple epochs of
-training.
-
-## Model Validation
-
-Validation Set: Takeaways
-
-We create a validation set to:
+Remember: The goal is to minimize the loss function by adjusting the model's parameters through multiple epochs of training. We create a validation set to:
 
 1. Measure how well a model generalizes, during training
-2. Tell us when to stop training a model; when the validation loss stops decreasing (and especially when the validation
-   loss
-   starts increasing and the training loss is still decreasing) we should stop training. It is actually more practical
-   to train
-   for a longer time than we should, but save the weights of the model at the minimum of the validation set, and then
-   just throw
-   away the epochs after the validation loss minimum.
+
+2. Tell us when to stop training a model; when the validation loss stops decreasing (and especially when the validation loss starts increasing and the training loss is still decreasing) we should stop training. It is actually more practical to train for a longer time than we should, but save the weights of the model at the minimum of the validation set, and then just throw away the epochs after the validation loss minimum.
 
 <br>
-
-![image info](images/train.png)
-
+<img src="images/train.png" alt="Training and Validation Loss" width="600" height=auto>
 <br>
 
 ### Validation Loop
 
-Once we have performed an epoch of training we can evaluate the model against the validation set to see how it is doing.
-This is accomplished with the validation loop:
+Once we have performed an epoch of training we can evaluate the model against the validation set to see how it is doing. This is accomplished with the validation loop:
 
 ```
 # Tell pytorch to stop computing gradients for the moment
@@ -462,23 +447,15 @@ with torch.no_grad():
 
 ```
 
-It is usually a good idea to wrap the validation loop in a function so you can return the validation loss for each
-epoch,
-and you can check whether the current epoch has the lowest loss so far. In that case, you save the weights of the model.
-We will see in one of the future exercises how to do that.
+It is usually a good idea to wrap the validation loop in a function so you can return the validation loss for each epoch, and you can check whether the current epoch has the lowest loss so far. In that case, you save the weights of the model. We will see in one of the future exercises how to do that.
+
 
 ### The Test Loop
 
-The test loop is identical to the validation loop, but we of course iterate over the test dataloader instead of the
-validation
-dataloader.
-
-To visually summarize what we have discussed so far, here is a typical workflow for an image classification task:
+The test loop is identical to the validation loop, but we of course iterate over the test dataloader instead of the validation dataloader. To visually summarize what we have discussed so far, here is a typical workflow for an image classification task:
 
 <br>
-
-![image info](images/visualize.png)
-
+<img src="images/visualize.png" alt="Workflow" width="600" height=auto>
 <br>
 
 
@@ -505,32 +482,21 @@ Typical Workflow for an image classification task:
 9. Evaluate on Test Data: The chosen model is then evaluated on a separate test dataset to assess its generalization
    performance.
 
-This workflow is cyclical, with the "Experiment" step potentially leading back to adjusting the model definition, loss
-function, or optimizer. The goal is to iterate and improve until a satisfactory model is achieved, which is then finally
-tested on unseen data.
+This workflow is cyclical, with the "Experiment" step potentially leading back to adjusting the model definition, loss function, or optimizer. The goal is to iterate and improve until a satisfactory model is achieved, which is then finally tested on unseen data.
+
+
+<br>
+<br>
 
 ### Classifier Performance (MLP and CNN)
 
-The MNIST dataset is very clean and is one of the few datasets where MLPs and Convolutional Neural Networks perform at a
-similar level of accuracy. However, all of the top-scoring architectures for MNIST(opens in a new tab) are CNNs (
-although
-their performance difference compared to MLPs is small).
+The MNIST dataset is very clean and is one of the few datasets where MLPs and Convolutional Neural Networks perform at a similar level of accuracy. However, all of the top-scoring architectures for MNIST(opens in a new tab) are CNNs (although their performance difference compared to MLPs is small).
 
-In most cases, CNNs are vastly superior to MLPs, both in terms of accuracy and in terms of network size when dealing
-with
-images.
+In most cases, CNNs are vastly superior to MLPs, both in terms of accuracy and in terms of network size when dealing with images.
 
-As we will see, the main reason for the superiority of CNNs is that MLPs have to flatten the input image, and therefore
-initially ignore most of the spatial information, which is very important in an image. Also, among other things, they
-are
-not invariant for translation. This means that they need to learn to recognize the same image all over again if we
-translate
-even slightly the objects in it.
+As we will see, the main reason for the superiority of CNNs is that MLPs have to flatten the input image, and therefore initially ignore most of the spatial information, which is very important in an image. Also, among other things, they are not invariant for translation. This means that they need to learn to recognize the same image all over again if we translate even slightly the objects in it.
 
-CNNs instead don't need to flatten the image and can therefore immediately exploit the spatial structure. As we will
-see,
-through the use of convolution and pooling they also have approximate translation invariance, making them much better
-choices for image tasks.
+CNNs instead don't need to flatten the image and can therefore immediately exploit the spatial structure. As we will see, through the use of convolution and pooling they also have approximate translation invariance, making them much better choices for image tasks.
 
 # Multilayer Perceptrons (MLPs) vs Convolutional Neural Networks (CNNs)
 
@@ -559,7 +525,11 @@ choices for image tasks.
     - Suitable for tabular data, simple pattern recognition
     - Less effective for complex spatial data like images
 
-## Convolutional Neural Networks (CNNs)
+
+<br>
+<br>
+
+### Convolutional Neural Networks (CNNs)
 
 1. Structure:
     - Consist of convolutional layers, pooling layers, and fully connected layers
@@ -606,53 +576,29 @@ choices for image tasks.
 
 ### Locally-Connected Layers
 
-Convolutional Neural Networks are characterized by locally-connected layers, i.e., layers where neurons are connected to
-only a limited numbers of input pixels (instead of all the pixels like in fully-connected layers). Moreover, these
-neurons
-share their weights, which drastically reduces the number of parameters in the network with respect to MLPs. The idea
-behind
-this weight-sharing is that the network should be able to recognize the same pattern anywhere in the image.
+Convolutional Neural Networks are characterized by locally-connected layers, i.e., layers where neurons are connected to only a limited numbers of input pixels (instead of all the pixels like in fully-connected layers). Moreover, these neurons share their weights, which drastically reduces the number of parameters in the network with respect to MLPs. The idea behind this weight-sharing is that the network should be able to recognize the same pattern anywhere in the image.
 
 ### The Convolution Operation
 
-CNNs can preserve spatial information, and the key to this capability is called the Convolution operation: it makes the
-network capable of extracting spatial and color patterns that characterize different objects.
-
-CNNs use filters (also known as "kernels") to "extract" the features of an object (for example, edges). By using
-multiple
-different filters the network can learn to recognize complex shapes and objects.
+CNNs can preserve spatial information, and the key to this capability is called the Convolution operation: it makes the network capable of extracting spatial and color patterns that characterize different objects. CNNs use filters (also known as "kernels") to "extract" the features of an object (for example, edges). By using multiple different filters the network can learn to recognize complex shapes and objects.
 
 ### Image Filters
 
-Image filters are a traditional concept in computer vision. They are small matrices that can be used to transform the
-input
-image in specific ways, for example, highlighting edges of objects in the image.
+Image filters are a traditional concept in computer vision. They are small matrices that can be used to transform the input image in specific ways, for example, highlighting edges of objects in the image. An edge of an object is a place in an image where the intensity changes significantly.
 
-An edge of an object is a place in an image where the intensity changes significantly.
+To detect these changes in intensity within an image, you can create specific image filters that look at groups of pixels and react to alternating patterns of dark/light pixels. These filters produce an output that shows edges of objects and differing textures. We will see that CNNs can learn the most useful filters needed to, for example, classify an image. But before doing that, let's look at some specific filters that we can create manually to understand how they work.
 
-To detect these changes in intensity within an image, you can create specific image filters that look at groups of
-pixels
-and react to alternating patterns of dark/light pixels. These filters produce an output that shows edges of objects and
-differing textures.
+## Kernel Convolution in Convolutional Neural Networks
 
-We will see that CNNs can learn the most useful filters needed to, for example, classify an image. But before doing
-that,
-let's look at some specific filters that we can create manually to understand how they work.
+Kernel convolution is a fundamental operation in Convolutional Neural Networks (CNNs) that enables the network to detect features in images.
 
-# Kernel Convolution in Convolutional Neural Networks
-
-Kernel convolution is a fundamental operation in Convolutional Neural Networks (CNNs) that enables the network to detect
-features in images.
-
-## How Convolution Works
+### How Convolution Works
 
 1. **Kernel (Filter)**: A small matrix of weights, typically 3x3 or 5x5.
 2. **Sliding Window**: The kernel slides over the input image.
-3. **Element-wise Multiplication**: At each position, the kernel is multiplied element-wise with the overlapping image
-   patch.
+3. **Element-wise Multiplication**: At each position, the kernel is multiplied element-wise with the overlapping image patch.
 4. **Summation**: The products are summed to produce a single output value.
 
-## Example (based on the image):
 
 - Kernel (3x3):
   ```
@@ -673,7 +619,8 @@ features in images.
 
 The result (60) becomes the value in the output feature map for this position.
 
-## Edge Handling
+
+### Edge Handling
 
 When the kernel reaches the edges or corners of the image, special handling is required:
 
@@ -695,41 +642,27 @@ When the kernel reaches the edges or corners of the image, special handling is r
 - Convolution allows CNNs to detect local patterns and features.
 - Different kernels can detect various features (edges, textures, etc.).
 - As the network deepens, it can recognize more complex patterns.
-- The kernels' weights are learned during training, allowing the network to automatically discover important features
-  for the task at hand.
+- The kernels' weights are learned during training, allowing the network to automatically discover important features for the task at hand.
 
 ### Edge Handling
 
-Kernel convolution relies on centering a pixel and looking at its surrounding neighbors. So, what do you do if there are
-no surrounding pixels like on an image corner or edge? Well, there are a number of ways to process the edges, which are
-listed below. It’s most common to use padding, cropping, or extension. In extension, the border pixels of an image are
-copied and extended far enough to result in a filtered image of the same size as the original image.
+Kernel convolution relies on centering a pixel and looking at its surrounding neighbors. So, what do you do if there are no surrounding pixels like on an image corner or edge? Well, there are a number of ways to process the edges, which are listed below. It’s most common to use padding, cropping, or extension. In extension, the border pixels of an image are copied and extended far enough to result in a filtered image of the same size as the original image.
 
 1. Padding - The image is padded with a border of 0's, black pixels.
 
-2. Cropping - Any pixel in the output image which would require values from beyond the edge is skipped. This method can
-   result
-   in the output image being smaller then the input image, with the edges having been cropped.
+2. Cropping - Any pixel in the output image which would require values from beyond the edge is skipped. This method can result in the output image being smaller then the input image, with the edges having been cropped.
 
-3. Extension - The nearest border pixels are conceptually extended as far as necessary to provide values for the
-   convolution.
-   Corner pixels are extended in 90° wedges. Other edge pixels are extended in lines.
+3. Extension - The nearest border pixels are conceptually extended as far as necessary to provide values for the convolution. Corner pixels are extended in 90° wedges. Other edge pixels are extended in lines.
 
 <br>
-
-![image info](images/kernel_convolution.png)
-
+<img src="images/kernel_convolution.png" alt="Kernel Convolution" width="600" height=auto>
 <br>
 
 #### Question 1:
 
-Of the four kernels pictured above, which would be best for finding and enhancing horizontal edges and lines in an
-image?
-If needed, use the bottom images and go through the math of applying the filters to those images. Which filter gives you
-a
-horizontal line in the output?
+Of the four kernels pictured above, which would be best for finding and enhancing horizontal edges and lines in an image? If needed, use the bottom images and go through the math of applying the filters to those images. Which filter gives you a horizontal line in the output?
 
-The correct answer is d. Let's examine why:
+The correct answer is **d**. Let's examine why:
 
 Kernel d:
 
@@ -745,15 +678,13 @@ This kernel is designed to detect horizontal edges and lines because:
 2. The top row is negative, the middle row is zero, and the bottom row is positive.
 3. When this kernel slides over a horizontal edge (dark above, light below), it will produce a strong positive response.
 
-When applied to the horizontal edge image (the bottom-left image in the first figure), this kernel would highlight the
-horizontal line between the black and white regions.
+When applied to the horizontal edge image (the bottom-left image in the first figure), this kernel would highlight the horizontal line between the black and white regions.
 
 #### Question 2:
 
-Of the four kernels pictured above, which would be best for finding and enhancing vertical edges and lines in an image?
-If needed, use the example images as in the previous question.
+Of the four kernels pictured above, which would be best for finding and enhancing vertical edges and lines in an image? If needed, use the example images as in the previous question.
 
-The correct answer is b. Let's examine why:
+The correct answer is **b**. Let's examine why:
 
 Kernel b:
 
@@ -767,32 +698,27 @@ This kernel is designed to detect vertical edges and lines because:
 
 1. It has a strong vertical structure.
 2. The left column is negative, the middle column is zero, and the right column is positive.
-3. When this kernel slides over a vertical edge (dark on the left, light on the right), it will produce a strong
-   positive response.
+3. When this kernel slides over a vertical edge (dark on the left, light on the right), it will produce a strong positive response.
 
-When applied to the vertical edge image (the bottom-right image in the first figure), this kernel would highlight the
-vertical line between the black and white regions.
-
-Key points to remember:
+When applied to the vertical edge image (the bottom-right image in the first figure), this kernel would highlight the vertical line between the black and white regions. Key points to remember:
 
 1. Edge detection kernels typically have opposite signs on opposite sides of the kernel.
-2. The direction of the edge detection (horizontal or vertical) is perpendicular to the direction of the sign change in
-   the kernel.
-3. These kernels are examples of Sobel filters, which are commonly used for edge detection in image processing and
-   computer vision tasks.
+2. The direction of the edge detection (horizontal or vertical) is perpendicular to the direction of the sign change in the kernel.
+3. These kernels are examples of Sobel filters, which are commonly used for edge detection in image processing and computer vision tasks.
 
-By understanding how these kernels operate, you can see how convolutional neural networks can automatically learn to
-detect various features in images, starting from simple edges and progressing to more complex patterns in deeper layers.
+
+By understanding how these kernels operate, you can see how convolutional neural networks can automatically learn to detect various features in images, starting from simple edges and progressing to more complex patterns in deeper layers.
 
 <br>
-
-![image info](images/horizontal_vertical_edge.png)
-
+<img src="images/horizontal_vertical_edge.png" alt="Kernel Convolution" width="600" height=auto>
 <br>
 
 The two filters we have looked at above are called Sobel filters. They are well-known filters used to isolate edges.
 
-# Convolutional Neural Networks (CNNs) - Advanced Concepts
+<br>
+<br>
+
+## CNN Advanced Concepts
 
 ## 1. Kernel Convolution
 
