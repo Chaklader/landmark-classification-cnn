@@ -1397,29 +1397,17 @@ nn.MaxPool2d layer for max pooling. Stacking different blocks of convolution fol
 <img src="images/detailed.png" alt="Customer" width="600" height=auto>
 <br>
 
-
-The backbone is made of convolutional and pooling layers, and has the task of extracting information from the image.
-
-After the backbone there is a flattening layer that takes the output feature maps of the previous convolutional layer
-and
-flattens them out in a 1d vector: for each feature map the rows are stacked together in a 1d vector, then all the 1d
-vectors
-are stacked together to form a long 1d vector called a feature vector or embedding. This process is illustrated by the
-following image:
+The backbone is made of convolutional and pooling layers, and has the task of extracting information from the image. After the backbone there is a flattening layer that takes the output feature maps of the previous convolutional layer and flattens them out in a 1d vector: for each feature map the rows are stacked together in a 1d vector, then all the 1d vectors are stacked together to form a long 1d vector called a feature vector or embedding. This process is illustrated by the following image:
 
 
 <br>
-
-![image info](images/detailed_1.png)
-
+<img src="images/detailed_1.png" alt="Customer" width="600" height=auto>
 <br>
 
-
+<br>
+<img src="images/detailed_2.png" alt="Customer" width="600" height=auto>
 <br>
 
-![image info](images/detailed_2.png)
-
-<br>
 
 ### The Typical Convolutional Block
 
