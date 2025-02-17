@@ -726,7 +726,10 @@ The two filters we have looked at above are called Sobel filters. They are well-
 
 ## CNN Advanced Concepts
 
-## 1. Kernel Convolution
+<br>
+<br>
+
+## Kernel Convolution
 
 Kernel convolution is the fundamental operation in CNNs that enables feature detection in images.
 
@@ -760,7 +763,9 @@ b. Vertical edge detection:
 -1  0  1
 ```
 
-## 2. Pooling
+<br>
+
+## Pooling
 
 Pooling compresses information from a layer by summarizing areas of the feature maps.
 
@@ -780,7 +785,9 @@ Pooling compresses information from a layer by summarizing areas of the feature 
 2. Introduces translation invariance
 3. Reduces computational load for subsequent layers
 
-## 3. CNN Architecture
+<br>
+
+## CNN Architecture
 
 A typical CNN block consists of:
 
@@ -799,7 +806,7 @@ A typical CNN block consists of:
 - Multiple CNN blocks enable the network to recognize objects regardless of their position in the image
 - This is crucial for robust object recognition in various scenarios
 
-## 4. Importance in Image Processing
+### Importance in Image Processing
 
 - CNNs excel at tasks like image classification, object detection, and segmentation
 - The combination of convolution and pooling allows for efficient feature learning and dimensionality reduction
