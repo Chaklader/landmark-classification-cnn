@@ -174,7 +174,7 @@ $\hat{p}_i$ is the predicted probability for class $i$
 
 
 
-# Loss Function: Categorical Cross-Entropy (CCE)
+### Loss Function: Categorical Cross-Entropy (CCE)
 
 In our MNIST digit classification task, we use the Categorical Cross-Entropy (CCE) loss function. This choice is typical
 for multi-class classification problems where each sample belongs to exactly one class.
@@ -203,14 +203,6 @@ Where:
 3. The logarithm heavily penalizes confident misclassifications, encouraging the model to be cautious with its
    predictions.
 
-## Implementation in PyTorch
-
-In PyTorch, we use `nn.CrossEntropyLoss()`, which combines a softmax activation and the CCE loss in one operation,
-improving numerical stability.
-
-```textmate
-criterion = nn.CrossEntropyLoss()
-```
 
 This loss function is well-suited for our MNIST task because:
 
@@ -218,12 +210,76 @@ This loss function is well-suited for our MNIST task because:
 2. It encourages the model to output well-calibrated probabilities.
 3. It's differentiable, allowing for effective backpropagation during training.
 
-By minimizing this loss during training, we push our model to make increasingly accurate predictions on the digit
-classification task.
+By minimizing this loss during training, we push our model to make increasingly accurate predictions on the digit classification task.
 
+### ReLU Activation Function
+
+The purpose of an activation function is to scale the outputs of a layer so that they are consistent, small values. Much like normalizing input values, this step ensures that our model trains efficiently!
+
+A ReLU activation function stands for "Rectified Linear Unit" and is one of the most commonly used activation functions for hidden layers. It is an activation function, simply defined as the positive part of the input, x. So, for an input image with any negative pixel values, this would turn all those values to 0, black. You may hear this referred to as "clipping" the values to zero; meaning that is the lower bound.
 
 
 <br>
+<img src="images/ReLU.png" alt="Customer" width="600" height=auto>
+<br>
+
+
+### Design of an MLP - Rules of Thumb
+
+When designing an MLP you have a lot of different possibilities, and it is sometimes hard to know where to start. Unfortunately there are no strict rules, and experimentation is key. However, here are some guidelines to help you get started with an initial architecture that makes sense, from which you can start experimenting.
+
+The number of inputs input_dim is fixed (in the case of MNIST images for example it is 28 x 28 = 784), so the first layer must be a fully-connected layer (Linear in PyTorch) with input_dim as input dimension.
+
+Also the number of outputs is fixed (it is determined by the desired outputs). For a classification problem it is the number of classes n_classes, and for a regression problem it is 1 (or the number of continuous values to predict). So the output layer is a Linear layer with n_classes (in case of classification).
+
+What remains to be decided is the number of hidden layers and their size. Typically you want to start from only one hidden layer, with a number of neurons between the input and the output dimension. Sometimes adding a second hidden layer helps, and in rare cases you might need to add more than one. But one is a good starting point.
+
+As for the number of neurons in the hidden layers, a decent starting point is usually the mean between the input and the output dimension. Then you can start experimenting with increasing or decreasing, and observe the performances you get. If you see overfitting(opens in a new tab), start by adding regularization (dropout(opens in a new tab) and weight decay) instead of decreasing the number of neurons, and see if that fixes it. A larger network with a bit of drop-out learns multiple ways to arrive to the right answer, so it is more robust than a smaller network without dropout. If this doesn't address the overfitting, then decrease the number of neurons. If you see underfitting(opens in a new tab), add more neurons. You can start by approximating up to the closest power of 2. Keep in mind that the number of neurons also depends on the size of your training dataset: a larger network is more powerful but it needs more data to avoid overfitting.
+
+So let's consider the MNIST classification problem. We have n_classes = 10 and input_dim = 784, so a starting point for our experimentation could be:
+
+<br>
+<br>
+
+```
+import torch
+import torch.nn as nn
+
+class MyModel(nn.Module):
+
+  def __init__(self):
+
+    super().__init__()
+
+    # Create layers. In this case just a standard MLP
+    self.model = nn.Sequential(
+      # Input layer. The input is obviously 784. For
+      # the output (which is the input to the hidden layer)
+      # we take the mean between network input and output:
+      # (784 + 10) / 2 = 397 which we round to 400
+      nn.Linear(784, 400),
+      nn.Dropout(0.5),  # Combat overfitting
+      nn.ReLU(),
+      # Hidden layer
+      nn.Linear(400, 400),
+      nn.Dropout(0.5),  # Combat overfitting
+      nn.ReLU(),
+      # Output layer, must receive the output of the
+      # hidden layer and return the number of classes
+      nn.Linear(400, 10)
+    )
+
+  def forward(self, x):
+
+    # nn.Sequential will call the layers 
+    # in the order they have been inserted
+    return self.model(x)
+```
+
+<br>
+<br>
+
+
 
 # Sequential Neural Networks and Alternatives
 
