@@ -2566,10 +2566,9 @@ maps are output from a layer.
 
 Channel attention is a mechanism that a network can use to learn to pay more attention (i.e., to boost) feature maps
 that are useful for a specific example, and pay less attention to the others. This is accomplished by adding a
-sub-network
-that given the feature maps/channels assigns a scale to each input feature map. The feature maps with the largest scale
-are
-boosted:
+sub-network that given the feature maps/channels assigns a scale to each input feature map. The feature maps with the
+largest scale
+are boosted:
 
 <br>
 <img src="images/attention.png" width="600" height=auto/>
@@ -2598,17 +2597,13 @@ Vision Transformers have state-of-the-art performances in many academic computer
 by far the most widely-used models for real-world computer vision applications.
 
 Transformers are very powerful but they need a lot more data than CNNs, and they are typically slower and more
-computationally
-expensive. CNNs are more data-efficient because they are built around two baked-in assumptions: local connectivity,
-which
-dictates that pixels close to each other are related (by using small kernels); and weight sharing, which dictates that
-different portions of an image must be processed identically (by sliding the same convolutional kernel across the entire
-image). Transformers are much more general, and they do not impose these assumptions. Therefore, they are more
-adaptable,
-but need more data to learn these characteristics of many images. There are also architectures that are hybrids of CNNs
-and
-Transformers, which try to create the best combination of both, aiming to be data-efficient but more powerful than pure
-CNNs.
+computationally expensive. CNNs are more data-efficient because they are built around two baked-in assumptions: local
+connectivity, which dictates that pixels close to each other are related (by using small kernels); and weight sharing,
+which dictates that different portions of an image must be processed identically (by sliding the same convolutional
+kernel across the entire image). Transformers are much more general, and they do not impose these assumptions.
+Therefore, they are more adaptable, but need more data to learn these characteristics of many images. There are also
+architectures that are hybrids of CNNs and Transformers, which try to create the best combination of both, aiming to be
+data-efficient but more powerful than pure CNNs.
 
 Summarizing, there are currently 3 categories of computer vision models:
 
