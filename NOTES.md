@@ -812,7 +812,9 @@ A typical CNN block consists of:
 - The combination of convolution and pooling allows for efficient feature learning and dimensionality reduction
 - Learned features are often more effective than hand-crafted features
 
-## 5. Training Process
+<br>
+
+## Training Process
 
 1. Forward pass: Apply convolutions and pooling to input image
 2. Compare output to ground truth (using a loss function)
