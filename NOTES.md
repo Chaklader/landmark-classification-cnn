@@ -1433,8 +1433,7 @@ self.conv_block = nn.Sequential(
 
 ### A Simple CNN in PyTorch
 
-Let's now bring everything together and write our first CNN in PyTorch. We are going to have 3 convolutional blocks plus
-a head with a simple MLP.
+Let's now bring everything together and write our first CNN in PyTorch. We are going to have 3 convolutional blocks plus a head with a simple MLP.
 
 ```
 import torch
@@ -1484,9 +1483,10 @@ class MyCNN(nn.Module):
     return self.model(x)
 ```
 
-Let's analyze what is going on in the Sequential call. We have a series of 3 convolutional parts constituted of a
-convolutional
-layer, a max pooling operation that halves the input shape, and then a ReLU activation:
+<br>
+<br>
+
+Let's analyze what is going on in the Sequential call. We have a series of 3 convolutional parts constituted of a convolutional layer, a max pooling operation that halves the input shape, and then a ReLU activation:
 
 ```
 nn.Conv2d(3, 16, 3, padding=1),
@@ -1494,27 +1494,13 @@ nn.MaxPool2d(2, 2),
 nn.ReLU()
 ```
 
-We can also optionally insert a nn.Dropout2d layer for regularization. We repeat this structure 3 times, varying the
-number
-of feature maps in the sequence 16 -> 32 -> 64. As we go deep, in other words, we are working with feature maps with a
-smaller
-height and width (because we keep applying max pooling) but with a higher channel count. This is very typical and helps
-the
-network with abstracting concepts.
+We can also optionally insert a nn.Dropout2d layer for regularization. We repeat this structure 3 times, varying the number of feature maps in the sequence 16 -> 32 -> 64. As we go deep, in other words, we are working with feature maps with a smaller height and width (because we keep applying max pooling) but with a higher channel count. This is very typical and helps the network with abstracting concepts.
 
-Then, we have a Flatten layer that flattens our 64 feature maps (coming from the last conv layer before the flattening)
-into one long vector. Assuming that the input is 32x32, this vector will contain 1024 (4x4x64) numbers.
-
-Finally, we have an MLP made of fully-connected layers that combines all the information extracted by the convolutional
-part and outputs one number for each class (logits). We first compress the 1024-long array into an embedding of 128
-numbers,
-and then from there to the number of classes we have. Since we have used the nn.Sequential class, the forward method is
-extremely simple and it is just calling that Sequential instance.
+Then, we have a Flatten layer that flattens our 64 feature maps (coming from the last conv layer before the flattening) into one long vector. Assuming that the input is 32x32, this vector will contain 1024 (4x4x64) numbers. Finally, we have an MLP made of fully-connected layers that combines all the information extracted by the convolutional part and outputs one number for each class (logits). We first compress the 1024-long array into an embedding of 128 numbers, and then from there to the number of classes we have. Since we have used the nn.Sequential class, the forward method is extremely simple and it is just calling that Sequential instance.
 
 ### Questions and Answers
 
-Question 1 of 6:
-What are the functions of the typical sections of a CNN?
+### Q#1: What are the functions of the typical sections of a CNN?
 
 Answer:
 
@@ -1522,34 +1508,22 @@ Answer:
 - Flatten: Flatten the feature maps producing the feature vector
 - Head: Uses the feature vector to determine the final output
 
-Explanation: These three sections represent the typical structure of a CNN. The backbone extracts features, the flatten
-layer converts 2D feature maps to a 1D vector, and the head uses this vector for final classification or regression.
+Explanation: These three sections represent the typical structure of a CNN. The backbone extracts features, the flatten layer converts 2D feature maps to a 1D vector, and the head uses this vector for final classification or regression.
 
-Question 2 of 6:
-What are the layers contained in a typical convolutional block in the backbone?
+### Q#2: What are the layers contained in a typical convolutional block in the backbone?
 
 Answer:
 First layer in a block: nn.Conv2d
 Second layer in a block: nn.MaxPooling
 Third layer in a block: nn.ReLU
 
-Explanation: A typical convolutional block often consists of a convolutional layer (Conv2d) to extract features,
-followed
-by an activation function (ReLU) to introduce non-linearity, and then a pooling layer (MaxPooling) to reduce spatial
-dimensions.
+Explanation: A typical convolutional block often consists of a convolutional layer (Conv2d) to extract features, followed by an activation function (ReLU) to introduce non-linearity, and then a pooling layer (MaxPooling) to reduce spatial dimensions.
 
-Question 3 of 6:
-Let's consider an image that is (3, 224, 224), i.e., an RGB image (3 channels) with height and width both equal to 224.
-If we push it through the network, what is the shape of the output?
+### Q#3: Let's consider an image that is (3, 224, 224), i.e., an RGB image (3 channels) with height and width both equal to 224. If we push it through the network, what is the shape of the output?
 
 Answer: (32, 55, 55)
 
-Explanation: The network consists of two convolutional layers with MaxPooling. The first conv layer maintains the
-spatial
-dimensions (224x224) but changes channels to 16. The first MaxPool reduces it to 112x112. The second conv layer changes
-channels to 32 and maintains 112x112, then the final MaxPool reduces it to 55x55. So the final output shape is (32, 55,
-55).
-In order the shapes are:
+Explanation: The network consists of two convolutional layers with MaxPooling. The first conv layer maintains the spatial dimensions (224x224) but changes channels to 16. The first MaxPool reduces it to 112x112. The second conv layer changes channels to 32 and maintains 112x112, then the final MaxPool reduces it to 55x55. So the final output shape is (32, 55, 55). In order the shapes are:
 
 ```
 nn.Conv2d(3, 16, kernel_size=3, padding=1),  # out shape: (16, 224, 224)
@@ -1561,30 +1535,22 @@ nn.MaxPool2d(2, 2),  # (32, 55, 55)
 nn.ReLU() # (32, 55, 55)
 ```
 
-Question 4 of 6:
-Consider the same network as in Question 3, but with an additional nn.Flatten() layer at the end. What is the shape of
-the output?
+### Q#4:  Consider the same network as in Question 3, but with an additional nn.Flatten() layer at the end. What is the shape of the output?
 
 Answer: 96800 (32 x 55 x 55 = 96800)
 
-Explanation: The output from the previous convolutional layers is (32, 55, 55). The Flatten() layer will convert this 3D
-tensor into a 1D vector. The total number of elements is 32 * 55 * 55 = 96800.
+Explanation: The output from the previous convolutional layers is (32, 55, 55). The Flatten() layer will convert this 3D tensor into a 1D vector. The total number of elements is 32 * 55 * 55 = 96800.
 
-Question 5 of 6:
-What should be the value of feature_vector_dim in the first linear layer? In other words, what is the dimension of the
+### Q#5: What should be the value of feature_vector_dim in the first linear layer? In other words, what is the dimension of the
 feature vector that is fed to the head? Also, how many classes does this classifier handle?
 
 Answer: feature_vector_dim = 96800, n_classes = 100
 
-The dimension of the input to the first linear layer is the output of the flatten operation, which is equal to 32
-feature
-maps times 55 x 55. Also the number of classes is 100 as determined by the output dimension of the last linear layer.
+The dimension of the input to the first linear layer is the output of the flatten operation, which is equal to 32 feature maps times 55 x 55. Also the number of classes is 100 as determined by the output dimension of the last linear layer.
 
-Explanation: The feature vector dimension should match the flattened output from the convolutional layers, which is
-32*55*55 = 96800. The final linear layer outputs 100 dimensions, indicating this network classifies into 100 classes.
+Explanation: The feature vector dimension should match the flattened output from the convolutional layers, which is 32*55*55 = 96800. The final linear layer outputs 100 dimensions, indicating this network classifies into 100 classes.
 
-Question 6 of 6:
-Consider this CNN (note that is slightly different than the previous ones):
+### Q#6: Consider this CNN (note that is slightly different than the previous ones):
 
 Answer: These statements are true.
 
@@ -1592,33 +1558,29 @@ Answer: These statements are true.
 - This network can handle images that are 28 by 28 in size.
 - There are 100 classes.
 
-Explanation: The network has two Conv2d layers, forming the convolutional part. The MLP part consists of three Linear
-layers
-(input, hidden, output). The network can handle 224x224 images as designed, but it can also handle 28x28 images because
-the
-convolutional layers don't have a fixed input size. The final layer outputs 100 dimensions, indicating 100 classes.
+Explanation: The network has two Conv2d layers, forming the convolutional part. The MLP part consists of three Linear layers (input, hidden, output). The network can handle 224x224 images as designed, but it can also handle 28x28 images because the convolutional layers don't have a fixed input size. The final layer outputs 100 dimensions, indicating 100 classes.
+
+<br>
+<br>
 
 ### Optimizing the Performance of Our Network
 
-Now that we have seen how to train a simple CNN, let’s dive deeper and see how we can improve on the performance of our
-network with some widely-adopted tricks.
+Now that we have seen how to train a simple CNN, let’s dive deeper and see how we can improve on the performance of our network with some widely-adopted tricks.
 
-1. Image augmentation: The basic idea of image augmentation is the following: if you want your network to be insensitive
-   to changes such as rotation, translation, and dilation, you can use the same input image and rotate it, translate it,
-   and scale it and ask the network not to change its prediction! In practice, this is achieved by applying random
-   transformations
-   to the input images before they are fed to the network.
+1. Image augmentation: The basic idea of image augmentation is the following: if you want your network to be insensitive to changes such as rotation, translation, and dilation, you can use the same input image and rotate it, translate it, and scale it and ask the network not to change its prediction! In practice, this is achieved by applying random transformations to the input images before they are fed to the network.
+
 2. Image Augmentation Using Transformations
+
 3. Batch Normalization
 
-Augmentation Pipelines
-
-A typical training augmentation pipeline is represented in this diagram.
 
 <br>
+<br>
 
-![image info](images/aug.png)
+A typical training augmentation pipeline is represented in this diagram:
 
+<br>
+<img src="images/aug.png" width="600" height=auto>
 <br>
 
 ```
@@ -1644,10 +1606,12 @@ train_transforms = T.Compose(
 )
 ```
 
-Transformation Pipelines for Validation and Test
+<br>
+<br>
 
-During validation and test you typically do not want to apply image augmentation (which is needed for training). Hence,
-this is a typical transform pipeline for validation and test that can be paired with the pipeline above:
+### Transformation Pipelines for Validation and Test
+
+During validation and test you typically do not want to apply image augmentation (which is needed for training). Hence, this is a typical transform pipeline for validation and test that can be paired with the pipeline above:
 
 ```
 testval_transforms = T.Compose(
@@ -1662,23 +1626,15 @@ testval_transforms = T.Compose(
 )
 ```
 
-Note that of course:
 
-The resize and crop should be the same as applied during training for best performance
-The normalization should be the same between training and inference (validation and test)
+The resize and crop should be the same as applied during training for best performance and the normalization should be the same between training and inference (validation and test)
+
 
 ### AutoAugment Transforms
 
-There is a special class of transforms defined in torchvision, referred to as AutoAugment(opens in a new tab). These
-classes
-implements augmentation policies that have been optimized in a data-driven way, by performing large-scale experiments on
-datasets such as ImageNet and testing many different recipes, to find the augmentation policy giving the best result. It
-is then proven that these policies provide good performances also on datasets different from what they were designed
-for.
+There is a special class of transforms defined in torchvision, referred to as AutoAugment(opens in a new tab). These classes implements augmentation policies that have been optimized in a data-driven way, by performing large-scale experiments on datasets such as ImageNet and testing many different recipes, to find the augmentation policy giving the best result. It is then proven that these policies provide good performances also on datasets different from what they were designed for.
 
-For example, one such auto-transform is called RandAugment and it is widely used. It is particularly interesting because
-it parametrizes the strength of the augmentations with one single parameter that can be varied to easily find the amount
-of augmentations that provides the best results. This is how to use it:
+For example, one such auto-transform is called RandAugment and it is widely used. It is particularly interesting because it parametrizes the strength of the augmentations with one single parameter that can be varied to easily find the amount of augmentations that provides the best results. This is how to use it:
 
 ```
 T.RandAugment(num_ops, magnitude)
@@ -1687,18 +1643,16 @@ T.RandAugment(num_ops, magnitude)
 The main parameters are:
 
 1. num_ops: the number of random transformations applied. Defaut: 2
-2. magnitude: the strength of the augmentations. The larger the value, the more diverse and extreme the augmentations
-   will
-   become.
+2. magnitude: the strength of the augmentations. The larger the value, the more diverse and extreme the augmentations will become.
 
-# Batch Normalization in CNNs
+<br>
+<br>
 
-## Introduction
+## Batch Normalization in CNNs
 
-Batch Normalization is a technique used to improve the training of Convolutional Neural Networks (CNNs) by standardizing
-the inputs to each layer.
+Batch Normalization is a technique used to improve the training of Convolutional Neural Networks (CNNs) by standardizing the inputs to each layer.
 
-## The BatchNorm Equation
+### The BatchNorm Equation
 
 $x \leftarrow \frac{x - \mu_x}{\sigma_x} \gamma + \beta$
 
@@ -1710,7 +1664,7 @@ Where:
 - $\gamma$: learnable scaling parameter
 - $\beta$: learnable shifting parameter
 
-## Key Components
+### Key Components
 
 1. **Normalization**: $(x - \mu_x) / \sigma_x$
     - Centers the activations around zero
@@ -1720,91 +1674,61 @@ Where:
     - Allow the network to undo normalization if needed
     - Provide flexibility in learning optimal activation distributions
 
-## Benefits of BatchNorm
+### Benefits of BatchNorm
 
 1. Reduces internal covariate shift
 2. Allows higher learning rates, accelerating training
 3. Acts as a form of regularization
 4. Reduces the dependence on careful initialization
 
-## Implementation Notes
+### Implementation Notes
 
 - Applied after the linear transformation but before the activation function
 - Uses mini-batch statistics during training
 - Uses population statistics during inference
 
-## Considerations
+### Considerations
 
 - Batch size affects the stability of BatchNorm
 - May require adjustments in very small batch sizes or online learning scenarios
 
-## Conclusion
+Batch Normalization standardizes layer inputs, significantly improving training speed and stability in deep neural networks, especially CNNs.
 
-Batch Normalization standardizes layer inputs, significantly improving training speed and stability in deep neural
-networks,
-especially CNNs.
+<br>
+<br>
 
 ### Batch Normalization
 
-The second modern trick that paves the way for enhancing the performance of a network is called Batch Normalization, or
-BatchNorm. It does not usually improve the performances per se, but it allows for much easier training and a much
-smaller
-dependence on the network initialization, so in practice it makes our experimentation much easier, and allows us to more
-easily find the optimal solution.
+The second modern trick that paves the way for enhancing the performance of a network is called Batch Normalization, or BatchNorm. It does not usually improve the performances per se, but it allows for much easier training and a much smaller dependence on the network initialization, so in practice it makes our experimentation much easier, and allows us to more easily find the optimal solution.
 
 Just as we normalize the input image before feeding it to the network, we would like to keep the feature maps
-normalized,
-since they are the output of one layer and the input to the next layer. In particular, we want to prevent them to vary
-wildly during training, because this would require large adjustments of the subsequent layers. Enter BatchNorm.
-BatchNorm
-normalizes the activations and keep them much more stable during training, making the training more stable and the
-convergence
-faster.
+normalized, since they are the output of one layer and the input to the next layer. In particular, we want to prevent them to vary wildly during training, because this would require large adjustments of the subsequent layers. Enter BatchNorm. BatchNorm normalizes the activations and keep them much more stable during training, making the training more stable and the convergence faster.
 
-In order to do this, during training BatchNorm needs the mean and the variance for the activations for each mini-batch.
-This means that the batch size cannot be too small or the estimates for mean and variance will be inaccurate. During
-training,
-the BatchNorm layer also keeps a running average of the mean and the variance, to be used during inference.
+In order to do this, during training BatchNorm needs the mean and the variance for the activations for each mini-batch. This means that the batch size cannot be too small or the estimates for mean and variance will be inaccurate. During training, the BatchNorm layer also keeps a running average of the mean and the variance, to be used during inference.
 
-During inference we don't have mini-batches. Therefore, the layer uses the mean and the variance computed during
-training
-(the running averages).
+During inference we don't have mini-batches. Therefore, the layer uses the mean and the variance computed during training (the running averages). This means that BatchNorm behaves differently during training and during inference. The behavior changes when we set the model to training mode (using model.train()) or to validation mode (model.eval()).
 
-This means that BatchNorm behaves differently during training and during inference. The behavior changes when we set the
-model to training mode (using model.train()) or to validation mode (model.eval()).
+<br>
+<br>
 
 ### How BatchNorm Works
 
 Just as we normalize the input image before feeding it to the network, we would like to keep the feature maps
-normalized,
-since they are the output of one layer and the input to the next layer. In particular, we want to prevent them to vary
-wildly during training, because this would require large adjustments of the subsequent layers. Enter BatchNorm.
-BatchNorm
-normalizes the activations and keep them much more stable during training, making the training more stable and the
-convergence
-faster.
+normalized, since they are the output of one layer and the input to the next layer. In particular, we want to prevent them to vary wildly during training, because this would require large adjustments of the subsequent layers. Enter BatchNorm. BatchNorm normalizes the activations and keep them much more stable during training, making the training more stable and the convergence faster.
 
-In order to do this, during training BatchNorm needs the mean and the variance for the activations for each mini-batch.
-This means that the batch size cannot be too small or the estimates for mean and variance will be inaccurate. During
-training,
-the BatchNorm layer also keeps a running average of the mean and the variance, to be used during inference.
+In order to do this, during training BatchNorm needs the mean and the variance for the activations for each mini-batch. This means that the batch size cannot be too small or the estimates for mean and variance will be inaccurate. During training, the BatchNorm layer also keeps a running average of the mean and the variance, to be used during inference.
 
-During inference we don't have mini-batches. Therefore, the layer uses the mean and the variance computed during
-training
-(the running averages). This means that BatchNorm behaves differently during training and during inference. The behavior
-changes when we set the model to training mode (using model.train()) or to validation mode (model.eval()).
+During inference we don't have mini-batches. Therefore, the layer uses the mean and the variance computed during training (the running averages). This means that BatchNorm behaves differently during training and during inference. The behavior changes when we set the model to training mode (using model.train()) or to validation mode (model.eval()).
 
 
 <br>
-
-![image info](images/bn.png)
-
+<img src="images/bn.png" alt="bn.png" width="600" height=auto>
 <br>
+
 
 ### BatchNorm for Convolutional Layers
 
-BatchNorm can be used very easily in PyTorch as part of the convolutional block by adding the nn.BatchNorm2d layer just
-after the convolution:
+BatchNorm can be used very easily in PyTorch as part of the convolutional block by adding the nn.BatchNorm2d layer just after the convolution:
 
 ```
 self.conv1 = nn.Sequential(
