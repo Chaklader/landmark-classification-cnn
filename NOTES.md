@@ -280,15 +280,9 @@ class MyModel(nn.Module):
 <br>
 
 
+### Sequential Neural Networks
 
-# Sequential Neural Networks and Alternatives
-
-## Sequential Neural Networks
-
-A sequential neural network is a linear stack of layers where the output of one layer becomes the input to the next
-layer. This is the simplest and most common type of neural network architecture.
-
-### Characteristics:
+A sequential neural network is a linear stack of layers where the output of one layer becomes the input to the next layer. This is the simplest and most common type of neural network architecture. The main characteristics of a sequential neural network are:
 
 1. Layers are arranged in a straight line.
 2. Data flows through the network in a single, forward direction.
@@ -296,7 +290,7 @@ layer. This is the simplest and most common type of neural network architecture.
 
 ### Example in PyTorch:
 
-```textmate
+```
 import torch.nn as nn
 
 model = nn.Sequential(
@@ -308,10 +302,10 @@ model = nn.Sequential(
 )
 ```
 
-## Non-Sequential Neural Networks
+### Non-Sequential Neural Networks
 
-It is absolutely possible, and often necessary, to have neural networks that are not sequential. These are sometimes
-called non-sequential or non-linear neural networks.
+It is absolutely possible, and often necessary, to have neural networks that are not sequential. These are sometimes called non-sequential or non-linear neural networks.
+
 
 ### Types of Non-Sequential Architectures:
 
@@ -323,7 +317,8 @@ called non-sequential or non-linear neural networks.
 
 ### Example of a Non-Sequential Network in PyTorch:
 
-```textmate
+
+```
 class NonSequentialNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -343,102 +338,20 @@ class NonSequentialNet(nn.Module):
         return F.log_softmax(x, dim=1)
 ```
 
-## When to Use Non-Sequential Networks
 
-1. **Complex Data Dependencies**: When your data has complex relationships that can't be captured by a simple linear
-   flow.
+### When to Use Non-Sequential Networks
+
+1. **Complex Data Dependencies**: When your data has complex relationships that can't be captured by a simple linear flow.
 2. **Performance Improvement**: Techniques like skip connections in ResNets can help with training very deep networks.
-3. **Task-Specific Requirements**: Some tasks inherently require non-sequential processing, like image segmentation or
-   machine translation.
+3. **Task-Specific Requirements**: Some tasks inherently require non-sequential processing, like image segmentation or machine translation.
 4. **Multi-Modal Data**: When working with multiple types of input data simultaneously.
 
-Non-sequential architectures offer more flexibility and can often capture more complex patterns in data, but they can
-also be more challenging to design and train.
+Non-sequential architectures offer more flexibility and can often capture more complex patterns in data, but they can also be more challenging to design and train.
 
-ReLU Activation Function
-
-The purpose of an activation function is to scale the outputs of a layer so that they are consistent, small values. Much
-like normalizing input values, this step ensures that our model trains efficiently!
-
-A ReLU activation function stands for "Rectified Linear Unit" and is one of the most commonly used activation functions
-for hidden layers. It is an activation function, simply defined as the positive part of the input, x. So, for an input
-image with any negative pixel values, this would turn all those values to 0, black. You may hear this referred to as
-"clipping" the values to zero; meaning that is the lower bound.
-
-## Design of an MLP (Multi-Layer Perceptron)
-
-When designing an MLP you have a lot of different possibilities, and it is sometimes hard to know where to start.
-Unfortunately
-there are no strict rules, and experimentation is key. However, here are some guidelines to help you get started with an
-initial
-architecture that makes sense, from which you can start experimenting.
-
-The number of inputs input_dim is fixed (in the case of MNIST images for example it is 28 x 28 = 784), so the first
-layer
-must be a fully-connected layer (Linear in PyTorch) with input_dim as input dimension.
-
-Also the number of outputs is fixed (it is determined by the desired outputs). For a classification problem it is the
-number
-of classes n_classes, and for a regression problem it is 1 (or the number of continuous values to predict). So the
-output
-layer is a Linear layer with n_classes (in case of classification).
-
-What remains to be decided is the number of hidden layers and their size. Typically you want to start from only one
-hidden
-layer, with a number of neurons between the input and the output dimension. Sometimes adding a second hidden layer
-helps,
-and in rare cases you might need to add more than one. But one is a good starting point.
-
-As for the number of neurons in the hidden layers, a decent starting point is usually the mean between the input and the
-output dimension. Then you can start experimenting with increasing or decreasing, and observe the performances you get.
-If you see overfitting(opens in a new tab), start by adding regularization (dropout(opens in a new tab) and weight
-decay)
-instead of decreasing the number of neurons, and see if that fixes it. A larger network with a bit of drop-out learns
-multiple ways to arrive to the right answer, so it is more robust than a smaller network without dropout. If this
-doesn't
-address the overfitting, then decrease the number of neurons. If you see underfitting(opens in a new tab), add more
-neurons.
-You can start by approximating up to the closest power of 2. Keep in mind that the number of neurons also depends on the
-size of your training dataset: a larger network is more powerful but it needs more data to avoid overfitting.
-
-```textmate
-import torch
-import torch.nn as nn
-
-class MyModel(nn.Module):
-
-  def __init__(self):
-
-    super().__init__()
-
-    # Create layers. In this case just a standard MLP
-    self.model = nn.Sequential(
-      # Input layer. The input is obviously 784. For
-      # the output (which is the input to the hidden layer)
-      # we take the mean between network input and output:
-      # (784 + 10) / 2 = 397 which we round to 400
-      nn.Linear(784, 400),
-      nn.Dropout(0.5),  # Combat overfitting
-      nn.ReLU(),
-      # Hidden layer
-      nn.Linear(400, 400),
-      nn.Dropout(0.5),  # Combat overfitting
-      nn.ReLU(),
-      # Output layer, must receive the output of the
-      # hidden layer and return the number of classes
-      nn.Linear(400, 10)
-    )
-
-  def forward(self, x):
-
-    # nn.Sequential will call the layers 
-    # in the order they have been inserted
-    return self.model(x)
-```
 
 <br>
 
-# Training a Neural Network in PyTorch
+## Training a Neural Network in PyTorch
 
 ## 1. Loss Function
 
@@ -514,7 +427,7 @@ We create a validation set to:
 Once we have performed an epoch of training we can evaluate the model against the validation set to see how it is doing.
 This is accomplished with the validation loop:
 
-```textmate
+```
 # Tell pytorch to stop computing gradients for the moment
 # by using the torch.no_grad() context manager
 with torch.no_grad():
@@ -901,7 +814,7 @@ Kernel convolution is the fundamental operation in CNNs that enables feature det
 
 a. Horizontal edge detection:
 
-```textmate
+```
 -1 -2 -1
  0  0  0
  1  2  1
@@ -909,7 +822,7 @@ a. Horizontal edge detection:
 
 b. Vertical edge detection:
 
-```textmate
+```
 -1  0  1
 -2  0  2
 -1  0  1
@@ -1234,7 +1147,7 @@ $n_p = n_k(ck^2 + 1)$.
 
 ### Convolutional Layers in PyTorch
 
-```textmate
+```
 from torch import nn
 
 conv1 = nn.Conv2d(in_channels, out_channels, kernel_size)
@@ -1258,7 +1171,7 @@ You must pass the following arguments:
 We can also use nn.Sequential, which stacks together the layers we give as argument so they can be used as if they were
 one. For example we can build a convolutional block as:
 
-```textmate
+```
 conv_block = nn.Sequential(
   nn.Conv2d(in_channels, out_channels, kernel_size),
   nn.ReLU(),
@@ -1393,7 +1306,7 @@ activation.
 
 To create a pooling layer in PyTorch, you must first import the necessary module:
 
-```textmate
+```
 from torch import nn
 nn.MaxPool2d(kernel_size, stride)
 ```
@@ -1539,7 +1452,7 @@ following image:
 
 The typical sequence convolution -> pooling -> activation (with optional dropout) can be written in PyTorch like this:
 
-```textmate
+```
 self.conv1 = nn.Conv2d(3, 16, 3, padding=1),
 self.pool = nn.MaxPool2d(2, 2),
 self.relu1 = nn.ReLU()
@@ -1548,7 +1461,7 @@ self.drop1 = nn.Dropout2d(0.2)
 
 (or of course with the nn.Sequential equivalent:
 
-```textmate
+```
 self.conv_block = nn.Sequential(
   nn.Conv2d(3, 16, 3, padding=1),
   nn.MaxPool2d(2, 2),
@@ -1562,7 +1475,7 @@ self.conv_block = nn.Sequential(
 Let's now bring everything together and write our first CNN in PyTorch. We are going to have 3 convolutional blocks plus
 a head with a simple MLP.
 
-```textmate
+```
 import torch
 import torch.nn as nn
 
@@ -1614,7 +1527,7 @@ Let's analyze what is going on in the Sequential call. We have a series of 3 con
 convolutional
 layer, a max pooling operation that halves the input shape, and then a ReLU activation:
 
-```textmate
+```
 nn.Conv2d(3, 16, 3, padding=1),
 nn.MaxPool2d(2, 2),
 nn.ReLU()
@@ -1677,7 +1590,7 @@ channels to 32 and maintains 112x112, then the final MaxPool reduces it to 55x55
 55).
 In order the shapes are:
 
-```textmate
+```
 nn.Conv2d(3, 16, kernel_size=3, padding=1),  # out shape: (16, 224, 224)
 nn.MaxPool2d(2, 2), # (16, 112, 112)
 nn.ReLU(),  # (16, 112, 112)
@@ -1747,7 +1660,7 @@ A typical training augmentation pipeline is represented in this diagram.
 
 <br>
 
-```textmate
+```
 import torchvision.transforms as T
 
 train_transforms = T.Compose(
@@ -1775,7 +1688,7 @@ Transformation Pipelines for Validation and Test
 During validation and test you typically do not want to apply image augmentation (which is needed for training). Hence,
 this is a typical transform pipeline for validation and test that can be paired with the pipeline above:
 
-```textmate
+```
 testval_transforms = T.Compose(
     [
         # The size here depends on your application. Here let's use 256x256
@@ -1806,7 +1719,7 @@ For example, one such auto-transform is called RandAugment and it is widely used
 it parametrizes the strength of the augmentations with one single parameter that can be varied to easily find the amount
 of augmentations that provides the best results. This is how to use it:
 
-```textmate
+```
 T.RandAugment(num_ops, magnitude)
 ```
 
@@ -1932,7 +1845,7 @@ changes when we set the model to training mode (using model.train()) or to valid
 BatchNorm can be used very easily in PyTorch as part of the convolutional block by adding the nn.BatchNorm2d layer just
 after the convolution:
 
-```textmate
+```
 self.conv1 = nn.Sequential(
   nn.Conv2d(3, 16, kernel_size=3, padding=1),
   nn.BatchNorm2d(16),
@@ -1954,7 +1867,7 @@ and inference.
 
 We can add BatchNorm to MLPs very easily by using nn.BatchNorm1d:
 
-```textmate
+```
 self.mlp = nn.Sequential(
   nn.Linear(1024, 500),
   nn.BatchNorm1d(500),
@@ -2080,7 +1993,7 @@ One of the simplest one is the StepLR scheduler. It reduces the learning rate by
 can
 be used as follows:
 
-```textmate
+```
 from torch.optim.lr_scheduler import StepLR
 
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
@@ -2118,7 +2031,7 @@ your results. Think of it as one row in a hypothetical spreadsheet, where the co
 accuracy,
 validation loss, ...). A run can be created like this:
 
-```textmate
+```
 with mlflow.start_run():
   ... your code here ...
 ```
@@ -2131,7 +2044,7 @@ hyperparameters are the learning rate and the batch size. We can track their val
 using
 those values like this:
 
-```textmate
+```
 import mlflow
 
 with mlflow.start_run():
@@ -2158,7 +2071,7 @@ and what doesn't. It provides a UI that looks like this:
 
 But you can also look at the results in a notebook by doing:
 
-```textmate
+```
 runs = mlflow.search_runs()
 ```
 
@@ -2274,7 +2187,7 @@ Production-Ready Preprocessing
 Remember that the images need some preprocessing before being fed to the CNN. For example, typically you need to resize,
 center crop, and normalize the image with a transform pipeline similar to this:
 
-```textmate
+```
 testval_transforms = T.Compose(
     [
         # The size here depends on your application. Here let's use 256x256
@@ -2300,7 +2213,7 @@ scores.
 
 Let's see an example of such a wrapper class:
 
-```textmate
+```
 import torch
 from torchvision import datasets
 import torchvision.transforms as T
@@ -2350,7 +2263,7 @@ probability and take the corresponding element from the class_names list, we can
 
 Then we have this:
 
-```textmate
+```
 self.transforms = nn.Sequential(
             T.Resize([256, ]),  # We use single int value inside a list due to torchscript type restrictions
             T.CenterCrop(224),
@@ -2374,7 +2287,7 @@ The forward Method
 
 Let's now look at the forward method:
 
-```textmate
+```
 def forward(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
             # 1. apply transforms
@@ -2397,7 +2310,7 @@ Export Using torchscript
 
 We can now create an instance of our Predictor wrapper and save it to file using torch.script:
 
-```textmate
+```
 predictor = Predictor(model, class_names, mean, std).cpu()
 
 # Export using torch.jit.script
@@ -2417,7 +2330,7 @@ we do immediately after).
 
 Now, in a different process or a different computer altogether, we can do:
 
-```textmate
+```
 import torch
 
 predictor_reloaded = torch.jit.load("standalone_model.pt")
@@ -2425,7 +2338,7 @@ predictor_reloaded = torch.jit.load("standalone_model.pt")
 
 This will recreate our wrapped model. We can then use it as follows:
 
-```textmate
+```
 from PIL import Image
 import torch
 import torchvision
@@ -2569,7 +2482,7 @@ $H(x) = 0 + x = x$
 
 ## VI. Implementation in PyTorch
 
-```textmate
+```
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super(ResidualBlock, self).__init__()
@@ -2674,7 +2587,7 @@ network.
 
 We can implement the ResNet block in PyTorch as follows:
 
-```textmate
+```
 class ResidualBlock(nn.Module):
     def __init__(self, inp, out1, out2):
         super().__init__()
@@ -2944,14 +2857,14 @@ that parameter and won't change its value nor compute the gradient of the loss w
 
 In PyTorch you can freeze all the parameters of a network using the following code:
 
-```textmate
+```
 for param in model.parameters():
     param.requires_grad = False
 ```
 
 Similarly, you can also freeze the parameters of a single layer. For example, say that this layer is called fc, then:
 
-```textmate
+```
 for param in model.fc.parameters():
   param.requires_grad = False
 ```
@@ -2968,7 +2881,7 @@ well can help the performance, but not always. Experimentation, as usual, is key
 If we want to also freeze the statistics accumulated we need to put the entire layer in evaluation mode by using eval
 (instead of requires_grad=False for its parameters):
 
-```textmate
+```
 model.bn.eval()
 ```
 
@@ -2991,7 +2904,7 @@ Netron(opens in a new tab) as explained in the next subsection.
 Visualizing an Architecture with Netron
 Netron is a web app, so you do not need to install anything locally. First we need to export the model:
 
-```textmate
+```
 # Fake image needed for torch.jit.trace
 # (adjust the size of the image from 224x224 to what the
 # network expects if needed)
@@ -3054,7 +2967,7 @@ Then we train, keeping all the layers fixed except for the layer(s) we have just
 For example, let's say we have 1000 images (a small dataset) and a classification task with 10 classes. This is what we
 could do:
 
-```textmate
+```
 import torch.nn as nn
 import torchvision.models
 
@@ -3117,7 +3030,7 @@ In this situation, fine-tuning does not give us better performance or faster tra
 from scratch. We can still take advantage of good architectures that performed well on ImageNet, since they are likely
 to work well on our dataset as well. We can just use them without pre-trained weights, for example:
 
-```textmate
+```
 import torch.nn as nn
 import torchvision.models
 
@@ -3158,13 +3071,13 @@ It is an alternative to torchvision that contains many more pretrained models.
 
 First let's install it with:
 
-```textmate
+```
 pip install timm
 ```
 
 Then we can get a pre-trained model with a custom head just by doing:
 
-```textmate
+```
 n_classes = 196
 model = timm.create_model("convnext_small", pretrained=True, num_classes=n_classes)
 ```
@@ -3387,7 +3300,7 @@ You will get a chance in the exercise upcoming to try out this code on your own!
 
 In this first look we have built the simplest autoencoder, which is made up of two linear layers:
 
-```textmate
+```
 class Autoencoder(nn.Module):
 
     def __init__(self, encoding_dim):
@@ -3529,7 +3442,7 @@ us back an output with the same size as the input.
 Transposed Convolutions in PyTorch
 You can generate a Transposed Convolution Layer in PyTorch with:
 
-```textmate
+```
 unpool = nn.ConvTranspose2d(input_ch, output_ch, kernel_size, stride=2)
 ```
 
@@ -3539,7 +3452,7 @@ For example, we can generate a Transposed Convolution Layer that doubles the siz
 generates
 16 feature maps as follows:
 
-```textmate
+```
 unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
 ```
 
@@ -3553,13 +3466,13 @@ followed by a convolution operation. The convolution makes the image produced by
 example,
 we can replace this Transposed Convolution:
 
-```textmate
+```
 unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
 ```
 
 with:
 
-```textmate
+```
 unpool = nn.Sequential(
     nn.Upsample(scale_factor = 2, mode='nearest'),
     nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
@@ -3569,7 +3482,7 @@ unpool = nn.Sequential(
 The simplest autoencoder using CNNs can be constructed with a convolutional layer followed by Max Pooling, and then an
 unpooling operation (such as a Transposed Convolution) that brings the image back to its original size:
 
-```textmate
+```
 class Autoencoder(nn.Module):
     def __init__(self, encoding_dim):
         super(Autoencoder, self).__init__()
@@ -3630,7 +3543,7 @@ Question 2 of 3:
 How many Transposed Convolutional layers with a kernel size of 2 and a stride of 2 do we need to upsample the result of
 the encoder back to the input shape?
 
-```textmate
+```
 encoder = nn.Sequential(
             nn.Conv2d(1, 32, 3, padding=1),
             nn.ReLU(),
@@ -3661,7 +3574,7 @@ You are training an autoencoder on RGB images that are 256 pixels high and 256 p
 following
 architecture for the encoder part:
 
-```textmate
+```
 encoder = nn.Sequential(
         nn.Conv2d(3, 32, 3, padding=1),
         nn.ReLU(),
@@ -3902,7 +3815,7 @@ located in an image.
 2. **Classification Head**: Class prediction
 3. **Localization Head**: Bounding box prediction
 
-```textmate
+```
 class MultiHead(nn.Module):
     def __init__(self):
         super().__init__()
@@ -3945,7 +3858,7 @@ Where:
 
 ### 1. Loss Components
 
-```textmate
+```
 class_loss = nn.CrossEntropyLoss()
 loc_loss = nn.MSELoss()
 alpha = 0.5  # Hyperparameter
@@ -3953,7 +3866,7 @@ alpha = 0.5  # Hyperparameter
 
 ### 2. Training Loop
 
-```textmate
+```
 for images, labels in train_loader:
     # Forward pass
     class_scores, bounding_box = model(images)
@@ -4018,7 +3931,7 @@ object localization this could look like:
 
 from torch import nn
 
-```textmate
+```
 class MultiHead(nn.Module):
     def __init__(self):
         super().__init__()
@@ -4092,7 +4005,7 @@ Multiple Losses in PyTorch
 This is an example of a training loop for a multi-head model with multiple losses (in this case, cross-entropy and mean
 squared error):
 
-```textmate
+```
 class_loss = nn.CrossEntropyLoss()
 loc_loss = nn.MSELoss()
 alpha = 0.5
@@ -4805,7 +4718,7 @@ in a new tab). The library also implements the Dice loss.
 
 This is how you can define a UNet using this library:
 
-```textmate
+```
 import segmentation_models_pytorch as smp
 
 # Binary segmentation?
@@ -4822,7 +4735,7 @@ model = smp.Unet(
 
 The Dice loss is simply:
 
-```textmate
+```
 loss = smp.losses.DiceLoss(smp.losses.BINARY_MODE, from_logits=True)
 ```
 
