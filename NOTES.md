@@ -3,13 +3,6 @@
 <br>
 <br>
 
-
-# C-3: CNNs in Depth
-# C-4: Transfer Learning
-# C-5: Autoencoders
-# C-6: Object Detection and Segmentation
-
-
 # C-2: CNN Concepts
 
 <br>
@@ -1014,35 +1007,36 @@ Reviewed how to use MLPs for image classification
 Learned of the limitations that MLPs have when it comes to image classification, and how CNNs overcome those limitations
 Learned the basic concepts of CNNs, and what makes them great at image tasks
 
-# CNN IN DEPTH
-
-Lesson Overview
-
-Apply all of the basic layers that make up a CNN
-Put all these layers together to build a CNN from the ground up
-Improve the performance of your CNN network
-Export a model for production
 
 
+# C-4: Transfer Learning
+# C-5: Autoencoders
+# C-6: Object Detection and Segmentation
 
 <br>
+<br>
 
-![image info](images/color_filter.png)
+# C-3: CNNs in Depth
 
+<br>
+<br>
+
+Apply all of the basic layers that make up a CNN Put all these layers together to build a CNN from the ground up Improve the performance of your CNN network Export a model for production
+
+<br>
+<img src="images/color_filter.png" alt="Customer" width="600" height=auto>
 <br>
 
 ### Convolution on Color Images
 
 The kernel that was a matrix of k x k numbers for grayscale images, becomes now a 3d filter of k x k x n channels:
 
-
+<br>
+<img src="images/convolution_process.gif" alt="Customer" width="600" height=auto>
 <br>
 
-![image info](images/convolution_process.gif)
 
-<br>
-
-# Multiple Convolutional Layers
+### Multiple Convolutional Layers
 
 In a CNN with more than one layer, the $n_k$ filters in the first convolutional layer will operate on the input image
 with 1 or 3 channels (RGB) and generate $n_k$ output feature maps. So in the case of an RGB image the filters in the
