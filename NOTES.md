@@ -1863,38 +1863,15 @@ for ...
 
 ### Tracking Your Experiments
 
-When you are performing hyperparameter optimization and other changes it is very important that you track all of your
-experiments.
-This way you will know which hyperparameters have given you which results, and you will be able to repeat those
-experiments, choose
-the best one, understand what works and what doesn't, and what you need to explore further. You will also be able to
-present all
-your results to other people.
+When you are performing hyperparameter optimization and other changes it is very important that you track all of your experiments. This way you will know which hyperparameters have given you which results, and you will be able to repeat those experiments, choose the best one, understand what works and what doesn't, and what you need to explore further. You will also be able to present all your results to other people. You can of course use spreadsheets for this, or even pen and paper, but there are definitely much better ways! Enter experiment tracking tools. There are many of them out there, and they all work in similar ways. Let's consider mlflow, which is free and open source.
 
-You can of course use spreadsheets for this, or even pen and paper, but there are definitely much better ways!
-
-Enter experiment tracking tools. There are many of them out there, and they all work in similar ways. Let's consider
-mlflow(opens
-in a new tab), which is free and open source.
-
-Tracking an experiment is easy in mlflow. You first start by creating a run. A run is a unit of execution that will
-contain
-your results. Think of it as one row in a hypothetical spreadsheet, where the columns are the things you want to track (
-accuracy,
-validation loss, ...). A run can be created like this:
+Tracking an experiment is easy in mlflow. You first start by creating a run. A run is a unit of execution that will contain your results. Think of it as one row in a hypothetical spreadsheet, where the columns are the things you want to track ( accuracy, validation loss, ...). A run can be created like this:
 
 ```
 with mlflow.start_run():
-  ... your code here ...
 ```
 
-Once you have created the run, you can use mlflow.log_param to log a parameter (i.e., one of the hyperparameters for
-example)
-and mlflow.log_metric to log a result (for example the final accuracy of your model). For example, let's assume that our
-only
-hyperparameters are the learning rate and the batch size. We can track their values as well as the results obtained when
-using
-those values like this:
+Once you have created the run, you can use mlflow.log_param to log a parameter (i.e., one of the hyperparameters for example) and mlflow.log_metric to log a result (for example the final accuracy of your model). For example, let's assume that our only hyperparameters are the learning rate and the batch size. We can track their values as well as the results obtained when using those values like this:
 
 ```
 import mlflow
@@ -1917,26 +1894,19 @@ with mlflow.start_run():
     mlflow.log_artifact("best_valid.pt")
 ```
 
-If we do this for all of our experiments, then mlflow will allow us to easily study the results and understand what
-works
-and what doesn't. It provides a UI that looks like this:
+<br>
+<br>
 
-But you can also look at the results in a notebook by doing:
+If we do this for all of our experiments, then mlflow will allow us to easily study the results and understand what works and what doesn't. But you can also look at the results in a notebook by doing:
 
 ```
 runs = mlflow.search_runs()
 ```
 
-runs is a pandas DataFrame that you can use to look at your results.
 
-We barely scratched the surface about what a tracking tool like mlflow can do for you. For example, they track the code
-that runs in your experiment so you can reproduce it even if you changed the code in the meantime. If you are looking to
-apply what you are learning in this course in a professional environment, have a good look at tracking tools and how
-they
-can benefit you.
+We barely scratched the surface about what a tracking tool like mlflow can do for you. For example, they track the code that runs in your experiment so you can reproduce it even if you changed the code in the meantime. If you are looking to apply what you are learning in this course in a professional environment, have a good look at tracking tools and how they can benefit you.
 
-Question 1 of 5:
-Which of the following are hyperparameters and which are parameters?
+### Q#1: Which of the following are hyperparameters and which are parameters?
 
 Answer:
 
@@ -1951,8 +1921,7 @@ Explanation: Hyperparameters are set before training and control the learning pr
 during training. Learning rate, number of layers, and kernel size are set before training, making them hyperparameters.
 Weights, biases, and BatchNorm parameters (alpha and beta) are learned during training, making them parameters.
 
-Question 2 of 5:
-What are some techniques to improve the performance of a CNN? (may be more than one answer)
+### Q#2: What are some techniques to improve the performance of a CNN? (may be more than one answer)
 
 Answer: All options are correct techniques to improve CNN performance.
 
@@ -1965,8 +1934,7 @@ hyperparameter tuning optimizes model settings, tracking experiments helps in id
 networks can capture more complex patterns, longer training allows for better convergence, and learning rate schedulers
 can help in finding optimal learning rates during training.
 
-Question 3 of 5:
-What is the role of the BatchNorm layer in modern CNNs? Select all that apply.
+### Q#3: What is the role of the BatchNorm layer in modern CNNs? Select all that apply.
 
 Answer:
 
@@ -1979,8 +1947,7 @@ for faster training and the use of larger learning rates. It also makes layers m
 optimizer's job. These effects collectively contribute to improving the network's accuracy. The option "Decrease the
 input size by 2" is incorrect as BatchNorm doesn't change input dimensions.
 
-Question 4 of 5:
-Which one is a sensible choice for the learning rate:
+### Q#4: Which one is a sensible choice for the learning rate:
 
 Answer: 0.005 (5e-3)
 
@@ -1988,8 +1955,7 @@ Explanation: Looking at the learning rate vs loss graph, we see that the lowest 
 learning rate of about 10^-2 to 10^-1. The option 0.005 (5e-3) is closest to this optimal range. 0.1 is too high (loss
 increases), and 0.00001 (1e-5) is too low (loss plateaus).
 
-Question 5 of 5:
-Please rank the hyperparameters in order of importance
+### Q#5: Please rank the hyperparameters in order of importance
 
 Answer: The exact ranking can vary, but a common order of importance would be:
 
@@ -2002,6 +1968,9 @@ Explanation: Architecture design is typically most crucial as it determines the 
 as it greatly affects training dynamics. Regularization techniques help prevent overfitting. Batch size, while
 important, often has less impact compared to the others. However, the relative importance can vary depending on the
 specific problem and dataset.
+
+<br>
+<br>
 
 ### Weight Initialization
 
