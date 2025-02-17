@@ -821,8 +821,7 @@ A typical CNN block consists of:
 3. Backward pass: Compute gradients and update kernel weights
 4. Repeat process with many images to optimize kernel weights
 
-By leveraging these concepts, CNNs have revolutionized computer vision tasks, achieving state-of-the-art performance in
-numerous applications.
+By leveraging these concepts, CNNs have revolutionized computer vision tasks, achieving state-of-the-art performance in numerous applications.
 
 ### Pooling
 
