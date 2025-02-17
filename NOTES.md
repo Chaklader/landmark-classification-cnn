@@ -3177,7 +3177,7 @@ Explanation: An autoencoder consists of these three main components working toge
 The encoder compresses the input into a lower-dimensional embedding, and the decoder attempts to reconstruct the
 original input from this embedding.
 
-### Q#2:  What are autoencoders used for? (Select all that apply)
+### Q#2: What are autoencoders used for? (Select all that apply)
 
 Answer: All options are valid uses:
 
@@ -3193,7 +3193,7 @@ Explanation: Autoencoders are versatile and can be used for multiple purposes:
 4. Anomaly detection: Can detect abnormal patterns by reconstruction error
 5. Denoising: Can learn to output clean versions of noisy inputs
 
-### Q#3:  What is unsupervised learning?
+### Q#3: What is unsupervised learning?
 
 Answer: It means learning without the need for labels
 
@@ -3201,7 +3201,7 @@ Explanation: Unsupervised learning is a type of machine learning where the algor
 explicit labels or supervision. In the context of autoencoders, they learn to reconstruct their input without needing
 any external labels, making them an unsupervised learning technique.
 
-### Q#4:  When using the Mean Squared Error loss in an autoencoder, what are we comparing?
+### Q#4: When using the Mean Squared Error loss in an autoencoder, what are we comparing?
 
 Answer: The input image and the output image
 
@@ -3325,8 +3325,7 @@ In real-life situations, you can also use an already-existing architecture like 
 remember to remove the final linear layers, i.e., the head and only keep the backbone). Of course, your decoder needs to
 then start from the embedding built by the architecture to get back to the dimension of the input image.
 
-Question 1 of 3:
-Below are some of the concepts we just discussed. Can you match each of them with the correct description?
+### Q#1: Below are some of the concepts we just discussed. Can you match each of them with the correct description?
 
 Answer:
 
@@ -3342,10 +3341,9 @@ Explanation: Each of these concepts plays a different role in neural networks:
 3. Transposed Convolution (also called deconvolution) is a learnable upsampling method
 4. Nearest Neighbors is a simple upsampling method that copies values
 
-Question 2 of 3:
+### Q#2: How many Transposed Convolutional layers with a kernel size of 2 and a stride of 2 do we need to
 
-How many Transposed Convolutional layers with a kernel size of 2 and a stride of 2 do we need to upsample the result of
-the encoder back to the input shape?
+upsample the result of the encoder back to the input shape?
 
 ```
 encoder = nn.Sequential(
@@ -3359,10 +3357,8 @@ encoder = nn.Sequential(
 ```
 
 Answer: Two, The Transposed Convolution can be thought as the "inverse" of a 2 x 2 Max Pooling operation, in the sense
-that
-while MaxPool2d(2, 2) halves the size of the input, a Transposed Convolution with a kernel size of 2 and a stride of 2
-doubles
-the input size. So if there are 2 Max Pooling operations, we need two Transposed Convolution operations.
+that while MaxPool2d(2, 2) halves the size of the input, a Transposed Convolution with a kernel size of 2 and a stride
+of 2 doubles the input size. So if there are 2 Max Pooling operations, we need two Transposed Convolution operations.
 
 Explanation:
 Looking at the encoder architecture:
@@ -3372,11 +3368,9 @@ Looking at the encoder architecture:
    Total reduction: 4x (2 \* 2)
    Therefore, we need two Transposed Convolutional layers to reverse this reduction and restore the original dimensions.
 
-Question 3 of 3:
+### Q#3: You are training an autoencoder on RGB images that are 256 pixels high and 256 pixels wide. Your
 
-You are training an autoencoder on RGB images that are 256 pixels high and 256 pixels wide. Your autoencoder has the
-following
-architecture for the encoder part:
+autoencoder has the following architecture for the encoder part:
 
 ```
 encoder = nn.Sequential(
@@ -3408,47 +3402,35 @@ Let's trace the dimensions through the encoder:
 
 Therefore, the final embedding shape is (64, 32, 64, 64).
 
+<br>
+<br>
+
 ### Denoising
 
-We call denoising the task of removing noise from an image by reconstructing a denoised image.
-
-This is a task that convolutional autoencoders are well-suited for.
+We call denoising the task of removing noise from an image by reconstructing a denoised image. This is a task that
+convolutional autoencoders are well-suited for.
 
 <br>
 <img src="images/denoise.png" alt="Customer" width="600" height=auto>
 <br>
-
-How Do We Train a Denoising Autoencoder?
 
 In order to train a denoising autoencoder we need to have access to the denoised version of the images. The easiest way
 to do this is to build a training dataset by taking clean images and adding noise to them. Then we will feed the image
 with the added noise into the autoencoder, and ask it to reconstruct the denoised (original) version.
 
 It is very important that we then compute the loss by comparing the input uncorrupted image (without noise) and the
-output
-of the network. DO NOT use the noisy version when computing the loss, otherwise your network will not learn!
-
-Why Does it Work?
+output of the network. DO NOT use the noisy version when computing the loss, otherwise your network will not learn!
 
 Let's consider an autoencoder trained on a noisy version of the MNIST dataset. During training, the autoencoder sees
-many
-examples of all the numbers. Each number has noisy pixels in different places. Hence, even though each number is
-corrupted
-by noise, the autoencoder can piece together a good representation for each number by learning different pieces from
-different
-examples. Here the convolutional structure helps a lot, because after a few layers the convolution smooths out a lot of
-the
-noise in a blurry but useful image of the number. This is also why generally you need to go quite deep with CNN
-autoencoders
-if you want to use them for denoising.
+many examples of all the numbers. Each number has noisy pixels in different places. Hence, even though each number is
+corrupted by noise, the autoencoder can piece together a good representation for each number by learning different
+pieces from different examples. Here the convolutional structure helps a lot, because after a few layers the convolution
+smooths out a lot of the noise in a blurry but useful image of the number. This is also why generally you need to go
+quite deep with CNN autoencoders if you want to use them for denoising.
 
-Question 1 of 2:
-
-If the tensor `images` represents a batch of uncorrupted images, and `noisy_images` represents a batch of images where
-we
-added noise, which is the correct application of the loss? (Assume that `outputs` is a batch of outputs from the
-autoencoder,
-and `loss = nn.MSELoss()`.)
+Question 1 of 2: If the tensor `images` represents a batch of uncorrupted images, and `noisy_images` represents a batch
+of images where we added noise, which is the correct application of the loss? (Assume that `outputs` is a batch of
+outputs from the autoencoder, and `loss = nn.MSELoss()`.)
 
 Answer: `loss(images, outputs)`. You have to compare the output of the network with the uncorrupted images.
 
@@ -3463,8 +3445,7 @@ In a denoising autoencoder:
 The goal is to train the network to remove noise, so we compare its output to the original clean image, not to the noisy
 input or any other combination.
 
-Question 2 of 2:
-What are the operations that are involved in training a denoising autoencoder? (check all that apply)
+Question 2 of 2: What are the operations that are involved in training a denoising autoencoder? (check all that apply)
 
 Answer: All options apply:
 
@@ -3484,37 +3465,26 @@ The training process for a denoising autoencoder involves all these steps in seq
 5. Finally, we use backpropagation to update the network's weights to minimize this loss
 
 This complete process allows the autoencoder to learn how to remove noise from images by trying to reconstruct clean
-versions
-from noisy inputs.
-
-As we have seen, an autoencoder has an encoder part that compresses the input into a vector (embedding) and a decoder
-part
-that takes the embedding and tries to regenerate the input.
+versions from noisy inputs. As we have seen, an autoencoder has an encoder part that compresses the input into a
+vector (embedding) and a decoder part that takes the embedding and tries to regenerate the input.
 
 Let's look closer at the embeddings for the MNIST dataset. Even though we did not use the labels for training the
-autoencoder,
-we can use them for visualization purposes and see if the embedding that the encoder has learned separates well the
-various
-classes. After all, if the encoder has learned the latent characteristics that distinguish a 3 from a 1 or a 8 from a 7,
-then the embedding space should reflect this structure.
+autoencoder, we can use them for visualization purposes and see if the embedding that the encoder has learned separates
+well the various classes. After all, if the encoder has learned the latent characteristics that distinguish a 3 from a 1
+or a 8 from a 7, then the embedding space should reflect this structure.
 
 Let's consider the CNN autoencoder we presented as a solution to the Convolutional Encoder exercise of this lesson. It
-has
-a latent space (where the embeddings live) of 32 feature maps each 7 x 7 pixels. This corresponds to 1568 numbers. Of
-course
-we cannot visualize a space with 1568 dimensions, so we are going to use the UMAP(opens in a new tab) dimensionality
-reduction
-technique to visualize it in 2d:
+has a latent space (where the embeddings live) of 32 feature maps each 7 x 7 pixels. This corresponds to 1568 numbers.
+Of course we cannot visualize a space with 1568 dimensions, so we are going to use the UMAP(opens in a new tab)
+dimensionality reduction technique to visualize it in 2d:
 
 Here the different colors correspond to the different classes in the MNIST dataset (the different digits). To make
-things
-easier, I annotated each cluster with the label of the most common class in the cluster.
+things easier, I annotated each cluster with the label of the most common class in the cluster.
 
 It is indeed clear that images representing similar numbers are clustered together. Not only are most of the points
-belonging
-to the same class close to each other, but also numbers that are visually similar to each other (like 3, 8 and 5) are
-close
-in the latent space.
+belonging to the same class close to each other, but also numbers that are visually similar to each other (like 3, 8 and
+
+5. are close in the latent space.
 
 Looking at this we could ask: what happens if we generate an embedding vector close to one of these clusters, and run it
 through the decoder? We should be able to generate new numbers! This is indeed the case. If we take a few points in the
@@ -3523,41 +3493,42 @@ embedding space and run them through the decoder, we obtain images such as:
 We have just generated new MNIST images!
 
 However, if we repeat this exercise enough we soon realize that things don't look so great. The embedding space of an
-autoencoder
-is discontinuous: you can take an embedding of a 3, modify it just a tiny bit and end up with a completely different
-number, or
-even something that does not resemble a number at all. Why? Because in our training we use a loss that does not enforce
-any
-particular structure in the embedding space, so the network finds the one that happens to solve our problem best,
-without
-considering any constraints regarding the structure of the space.
+autoencoder is discontinuous: you can take an embedding of a 3, modify it just a tiny bit and end up with a completely
+different number, or even something that does not resemble a number at all. Why? Because in our training we use a loss
+that does not enforce any particular structure in the embedding space, so the network finds the one that happens to
+solve our problem best, without considering any constraints regarding the structure of the space.
 
 In more formal terms we can say that the autoencoder learns a mapping between our images and the embedding space. It
-does
-not learn the distribution of the data in the embedding space.
+does not learn the distribution of the data in the embedding space.
 
 This problem can be solved by other algorithms, for example the so-called Variational Autoencoders (VAEs). They learn to
 project our points in an embedding space that has much more structure than a simple autoencoder. VAEs are proper
-generative
-models, in that they learn to represent the distribution of the dataset and therefore their embedding space is much more
-regular and more suited for data generation.
+generative models, in that they learn to represent the distribution of the dataset and therefore their embedding space
+is much more regular and more suited for data generation. A deeper dive into VAEs goes beyond the scope of this class,
+but you can find more information here. With what you learned in this lesson you should be able to learn VAEs in a
+breeze!
 
-A deeper dive into VAEs goes beyond the scope of this class, but you can find more information here(opens in a new tab).
-With what you learned in this lesson you should be able to learn VAEs in a breeze!
+<br>
+<br>
 
 ### Glossary
 
-Autoencoder: A neural network architecture consisting of an encoder part, which takes an input and compresses it into a
+<br>
+
+**Autoencoder**: A neural network architecture consisting of an encoder part, which takes an input and compresses it
+into a
 low-dimensional embedding vector, and a decoder part, which takes the embedding and tries to reconstruct the input image
 from it.
 
-Transposed Convolution: A special type of convolution that can be used to intelligently upsample an image or a feature
+**Transposed Convolution**: A special type of convolution that can be used to intelligently upsample an image or a
+feature
 map
 
-Denoising: The task of taking an image corrupted by noise and generating a version of the image where the noise has been
+**Denoising**: The task of taking an image corrupted by noise and generating a version of the image where the noise has
+been
 removed.
 
-Variational autoencoder (VAE): An extension of the idea of autoencoders that transforms them into proper generative
+**Variational autoencoder (VAE)**: An extension of the idea of autoencoders that transforms them into proper generative
 models.
 
 <br>
@@ -3569,15 +3540,13 @@ models.
 <br>
 
 In this lesson we will focus on object localization, object detection and semantic segmentation. These topics could
-easily
-fill an entire class. In this lesson we are going to look at a core set of concepts and solutions that will help you get
-started on these fascinating topics, with no intention of being complete.
+easily fill an entire class. In this lesson we are going to look at a core set of concepts and solutions that will help
+you get started on these fascinating topics, with no intention of being complete. In particular we are going to focus on
+two workhorse architectures for object detection and semantic segmentation, respectively: **RetinaNet** and **UNet**.
 
-In particular we are going to focus on two workhorse architectures for object detection and semantic segmentation,
-respectively:
-RetinaNet and UNet.
+<br>
 
-# Computer Vision Tasks and Their Objectives
+### Computer Vision Tasks and Their Objectives
 
 | Image ID | Task                  | Objective                                                                                             |
 |----------|-----------------------|-------------------------------------------------------------------------------------------------------|
@@ -3596,7 +3565,6 @@ Notes:
     - Instance segmentation differentiates between individual instances of the same class
 - Complexity and computational requirements generally increase from tasks a to e
 
-Lesson Outline
 In this lesson, you will learn how to:
 
 1. Define object localization and object detection
@@ -3607,16 +3575,16 @@ In this lesson, you will learn how to:
 6. Describe a semantic segmentation architecture called UNet
 7. Train and evaluate a UNet model on a custom dataset
 
-# Object Localization
+## Object Localization
 
-## I. Introduction
+### Introduction
 
 Object localization combines classification with spatial information, identifying both what an object is and where it is
 located in an image.
 
-## II. Multi-Head Architecture
+### Multi-Head Architecture
 
-### Components:
+#### Components:
 
 1. **Backbone**: Shared feature extractor
 2. **Classification Head**: Class prediction
@@ -3637,20 +3605,22 @@ class MultiHead(nn.Module):
         return class_scores, bounding_box
 ```
 
-## III. Loss Function
+### Loss Function
 
-### 1. Combined Loss Formula
+#### Combined Loss Formula
 
 $L = CE(\hat{p}) + \alpha MSE(b, \hat{b})$
 
-Where:
+Where :
 
 - $L$ is the total loss
 - $CE(\hat{p})$ is Cross-Entropy loss for classification
 - $MSE(b, \hat{b})$ is Mean Squared Error for bounding box
 - $\alpha$ is a scaling hyperparameter
 
-### 2. Expanded Form
+<br>
+
+#### Expanded Form
 
 $L = -\log \hat{p} + \alpha \sum_{i=1}^{4} (b_i - \hat{b_i})^2$
 
@@ -3661,9 +3631,9 @@ Where:
 - $\hat{b_i}$ are predicted bounding box coordinates
 - Sum is over 4 bounding box coordinates
 
-## IV. Implementation
+### Implementation
 
-### 1. Loss Components
+#### Loss Components
 
 ```
 class_loss = nn.CrossEntropyLoss()
@@ -3671,7 +3641,7 @@ loc_loss = nn.MSELoss()
 alpha = 0.5  # Hyperparameter
 ```
 
-### 2. Training Loop
+#### Training Loop
 
 ```
 for images, labels in train_loader:
@@ -3686,7 +3656,7 @@ for images, labels in train_loader:
     optimizer.step()
 ```
 
-## V. Key Considerations
+#### Key Considerations
 
 1. **Loss Balancing**:
 
@@ -3704,41 +3674,33 @@ for images, labels in train_loader:
     - Combined performance metrics
 
 This multi-head approach allows simultaneous optimization of both classification and localization tasks through a
-unified
-loss function, making it effective for object localization tasks.
+unified loss function, making it effective for object localization tasks.
+
+<br>
 
 ### Object Localization
 
-Object Localization and Bounding Boxes
-Object localization is the task of assigning a label and determining the bounding box of an object of interest in an
-image.
+Object Localization and Bounding Boxes Object localization is the task of assigning a label and determining the bounding
+box of an object of interest in an image. A bounding box is a rectangular box that completely encloses the object, whose
+sides are parallel to the sides of the image.
 
-A bounding box is a rectangular box that completely encloses the object, whose sides are parallel to the sides of the
-image.
+### Architecture of Object Localization Networks
 
-There are different ways of describing a bounding box, but they all require 4 numbers. These are some examples:
-
-Note in these images above that x_min, y_min is in the upper left. Images in deep learning are usually indexed as
-matrices,
-starting from the upper left. So if an image is 100 x 100, then (0,0) is the point in the upper left, and (99,99) is the
-point in the lower right.
-
-Architecture of Object Localization Networks
 The architecture of an object localization network is similar to the architecture of a classification network, but we
-add
-one more head (the localization head) on top of the existing classification head:
+add one more head (the localization head) on top of the existing classification head:
 
 <br>
 <img src="images/obj-loc.png" alt="Customer" width="600" height=auto>
 <br>
 
-A Multi-Head Model in PyTorch
+### A Multi-Head Model in PyTorch
+
 A multi-head model is a CNN where we have a backbone as typical for CNNs, but more than one head. For example, for
 object localization this could look like:
 
+```
 from torch import nn
 
-```
 class MultiHead(nn.Module):
     def __init__(self):
         super().__init__()
@@ -3770,17 +3732,15 @@ class MultiHead(nn.Module):
 ### Loss in a Multi-Head Model
 
 An object localization network, with its two heads, is an example of a multi-head network. Multi-head models provide
-multiple outputs that are in general paired with multiple inputs.
+multiple outputs that are in general paired with multiple inputs. For example, in the case of object localization, we
+have 3 inputs as ground truth: the image, the label of the object ("car") and the bounding box for that object (4
+numbers defining a bounding box). The object localization network processes the image through the backbone, then the two
+heads provide two outputs:
 
-For example, in the case of object localization, we have 3 inputs as ground truth: the image, the label of the object ("
-car") and the bounding box for that object (4 numbers defining a bounding box). The object localization network
-processes the image through the backbone, then the two heads provide two outputs:
-
-The class scores, that need to be compared with the input label
-The predicted bounding box, that needs to be compared with the input bounding box.
-The comparison between the input and predicted labels is made using the usual Cross-entropy loss, while the comparison
-between the input and the predicted bounding boxes is made using, for example, the mean squared error loss. The two
-losses are then summed to provide the total loss L.
+The class scores, that need to be compared with the input label The predicted bounding box, that needs to be compared
+with the input bounding box. The comparison between the input and predicted labels is made using the usual Cross-entropy
+loss, while the comparison between the input and the predicted bounding boxes is made using, for example, the mean
+squared error loss. The two losses are then summed to provide the total loss L.
 
 <br>
 <img src="images/slide.png" alt="Customer" width="600" height=aut>
@@ -3789,6 +3749,7 @@ losses are then summed to provide the total loss L.
 Since the two losses might be on different scales, we typically add a hyperparameter α to rescale one of the two:
 
 $L = CE(\hat{p}) + \alpha MSE(b, \hat{b})$
+
 Where:
 
 $L$ is the total loss
@@ -3796,17 +3757,20 @@ $CE(\hat{p})$ is the Cross-Entropy loss for classification
 $MSE(b, \hat{b})$ is the Mean Squared Error for bounding box prediction
 $\alpha$ is a hyperparameter to balance the two losses
 
-Expanded Loss Formula
+### Expanded Loss Formula
 
 $L = -\log \hat{p} + \alpha \sum_{i=1}^{4} (b_i - \hat{b_i})^2$
+
 Where:
 
 $\hat{p}$ is the predicted class probability
 $b_i$ are the true bounding box coordinates
 $\hat{b_i}$ are the predicted bounding box coordinates
+
 The sum is over the 4 coordinates of the bounding box
 
-Multiple Losses in PyTorch
+### Multiple Losses in PyTorch
+
 This is an example of a training loop for a multi-head model with multiple losses (in this case, cross-entropy and mean
 squared error):
 
@@ -3815,7 +3779,6 @@ class_loss = nn.CrossEntropyLoss()
 loc_loss = nn.MSELoss()
 alpha = 0.5
 
-...
 for images, labels in train_data_loader:
     ...
 
@@ -3832,6 +3795,9 @@ for images, labels in train_data_loader:
 
 ```
 
+<br>
+<br>
+
 ### Object Detection
 
 The task of object detection consists of detecting and localizing all the instances of the objects of interest.
@@ -3840,46 +3806,32 @@ Different images of course can have a different number of objects of interest: f
 zero cars, or many cars. The same images could also have one person, zero people or many people. In each one of these
 cases, we need the network to output one vector of class scores plus 4 numbers to define the bounding box for each
 object.
-How do we build a network with a variable number of outputs?
 
 It is clear that a network with the same structure as the object localization network would not work, because we would
-need a variable number of heads depending on the content of the image.
-
-One way would be to slide a window over the image, from the upper left corner to the lower right corner, and for each
-location of the image we run a normal object localization network. This sliding window approach works to a certain
-extent,
-but is not optimal because different objects can have different sizes and aspect ratios. Thus, a window with a fixed
-size won't fit well all objects of all sizes. For example, let's consider cars: depending on how close or far they are,
-their size in the image will be different. Also, depending on whether we are seeing the back or the front, or the side
-of
-the car, the aspect ratio of the box bounding the object would be pretty different. This becomes even more extreme if we
-consider objects from different classes, for example cars and people:
-
-Nowadays there are two approaches to solving the problem of handling a variable number of objects, and of their
-different
-aspect ratios and scales:
+need a variable number of heads depending on the content of the image. One way would be to slide a window over the
+image, from the upper left corner to the lower right corner, and for each location of the image we run a normal object
+localization network. This sliding window approach works to a certain extent, but is not optimal because different
+objects can have different sizes and aspect ratios. Thus, a window with a fixed size won't fit well all objects of all
+sizes. For example, let's consider cars: depending on how close or far they are, their size in the image will be
+different. Also, depending on whether we are seeing the back or the front, or the side of the car, the aspect ratio of
+the box bounding the object would be pretty different. This becomes even more extreme if we consider objects from
+different classes, for example cars and people: Nowadays there are two approaches to solving the problem of handling a
+variable number of objects, and of their different aspect ratios and scales:
 
 1. One-stage object detection
    We consider a fixed number of windows with different scales and aspect ratios, centered at fixed locations (anchors).
-   The
-   output of the network then has a fixed size. The localization head will output a vector with a size of 4 times the
-   number
-   of anchors, while the classification head will output a vector with a size equal to the number of anchors multiplied
-   by the
-   number of classes.
+   The output of the network then has a fixed size. The localization head will output a vector with a size of 4 times
+   the number of anchors, while the classification head will output a vector with a size equal to the number of anchors
+   multiplied by the number of classes.
 
 2. Two-stage object detection
    In the first stage, an algorithm or a neural network proposes a fixed number of windows in the image. These are the
-   places
-   in the image with the highest likelihood of containing objects. Then, the second stage considers those and applies
-   object
-   localization, returning for each place the class scores and the bounding box.
+   places in the image with the highest likelihood of containing objects. Then, the second stage considers those and
+   applies object localization, returning for each place the class scores and the bounding box.
 
 In practice, the difference between the two is that while the first type has fixed anchors (fixed windows in fixed
-places),
-the second one optimizes the windows based on the content of the image.
-
-In this lesson we are only going to treat one-stage object detection.
+places), the second one optimizes the windows based on the content of the image. In this lesson we are only going to
+treat one-stage object detection.
 
 ### One-Stage Object Detection: RetinaNet
 
