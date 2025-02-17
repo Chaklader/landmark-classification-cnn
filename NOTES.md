@@ -1796,85 +1796,51 @@ self.mlp = nn.Sequential(
 
 ## Strategies for Optimizing Hyperparameters
 
-Grid search
+### Grid search
 
 1. Divide the parameter space in a regular grid
 2. Execute one experiment for each point in the grid
 3. Simple, but wasteful
 
-Random search
+### Random search
 
 1. Divide the parameter space in a random grid
 2. Execute one experiment for each point in the grid
 3. Much more efficient sampling of the hyperparameter space with respect to grid search
 
-Bayesian Optimization
-Algorithm for searching the hyperparameter space using a Gaussian Process model
-Efficiently samples the hyperparameter space using minimal experiments
+### Bayesian Optimization
 
-Summary: Most Important Hyperparameters
+1. Algorithm for searching the hyperparameter space using a Gaussian Process model
+2. Efficiently samples the hyperparameter space using minimal experiments
 
-Optimizing hyperparameters can be confusing at the beginning, so we provide you with some rules of thumb about the
-actions
-that typically matter the most. They are described in order of importance below. These are not strict rules, but should
-help you get started:
+### Summary: Most Important Hyperparameters
 
-1. Design parameters: When you are designing an architecture from scratch, the number of hidden layers, as well as the
-   layers
-   parameters (number of filters, width and so on) are going to be important.
+Optimizing hyperparameters can be confusing at the beginning, so we provide you with some rules of thumb about the actions that typically matter the most. They are described in order of importance below. They are not strict rules, but should help you get started:
 
-2. Learning rate: Once the architecture is fixed, this is typically the most important parameter to optimize. The next
-   video
-   will focus on this.
+1. Design parameters: When you are designing an architecture from scratch, the number of hidden layers, as well as the layers parameters (number of filters, width and so on) are going to be important.
 
-3. Batch size: This is typically the most influential hyperparameter after the learning rate. A good starting point,
-   especially
-   if you are using BatchNorm, is to use the maximum batch size that fits in the GPU you are using. Then you vary that
-   value and
-   see if that improves the performances.
+2. Learning rate: Once the architecture is fixed, this is typically the most important parameter to optimize. The next video will focus on this.
 
-4. Regularization: Once you optimized the learning rate and batch size, you can focus on the regularization, especially
-   if you are seeing signs of overfitting or underfitting.
+3. Batch size: This is typically the most influential hyperparameter after the learning rate. A good starting point, especially if you are using BatchNorm, is to use the maximum batch size that fits in the GPU you are using. Then you vary that value and see if that improves the performances.
 
-5. Optimizers: Finally, you can also fiddle with the other parameters of the optimizers. Depending on the optimizers,
-   these
-   vary. Refer to the documentation and the relevant papers linked there to discover what these parameters are.
+4. Regularization: Once you optimized the learning rate and batch size, you can focus on the regularization, especially if you are seeing signs of overfitting or underfitting.
 
-### Summary: Optimizing Learning Rate
+5. Optimizers: Finally, you can also fiddle with the other parameters of the optimizers. Depending on the optimizers, these vary. Refer to the documentation and the relevant papers linked there to discover what these parameters are.
 
-The learning rate is one of the most important hyperparameters. However, knowing what the optimal value is, or even what
-a good range is, can be challenging.
 
-One useful tool to discover a good starting point for the learning rate is the so-called "learning rate finder." It
-scans
-different values of the learning rate, and computes the loss obtained by doing a forward pass of a mini-batch using that
-learning rate. Then, we can plot the loss vs. the learning rate and obtain a plot similar to this:
+The learning rate is one of the most important hyperparameters. However, knowing what the optimal value is, or even what a good range is, can be challenging. One useful tool to discover a good starting point for the learning rate is the so-called "learning rate finder." It scans different values of the learning rate, and computes the loss obtained by doing a forward pass of a mini-batch using that learning rate. Then, we can plot the loss vs. the learning rate and obtain a plot similar to this:
 
 
 
 <br>
-
-![image info](images/learning_rate.png)
-
+<img src="images/learning_rate.png" alt="learning_rate.png" width="600" height=auto>
 <br>
 
 ### Learning Rate Schedulers
 
-In many cases we want to vary the learning rate as the training progresses. At the beginning of the training we want to
-make pretty large steps because we are very far from the optimum. However, as we approach the minimum of the loss, we
-need to make sure we do not jump over the minimum.
+In many cases we want to vary the learning rate as the training progresses. At the beginning of the training we want to make pretty large steps because we are very far from the optimum. However, as we approach the minimum of the loss, we need to make sure we do not jump over the minimum.
 
-For this reason, it is often a good idea to use a learning rate scheduler, i.e., a class that changes the learning rate
-as
-the training progresses.
-
-There are several possible learning rate schedulers. You can find the available ones in the PyTorch learning rate
-schedulers
-documentation(opens in a new tab).
-
-One of the simplest one is the StepLR scheduler. It reduces the learning rate by a specific factor every n epochs. It
-can
-be used as follows:
+For this reason, it is often a good idea to use a learning rate scheduler, i.e., a class that changes the learning rate as the training progresses. There are several possible learning rate schedulers. You can find the available ones in the PyTorch learning rate schedulers documentation. One of the simplest one is the StepLR scheduler. It reduces the learning rate by a specific factor every n epochs. It can be used as follows:
 
 ```
 from torch.optim.lr_scheduler import StepLR
@@ -1891,6 +1857,9 @@ for ...
     # optimizer according to the schedule
     scheduler.step()
 ```
+
+<br>
+<br>
 
 ### Tracking Your Experiments
 
