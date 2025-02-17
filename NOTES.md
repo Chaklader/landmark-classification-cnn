@@ -2346,10 +2346,22 @@ height and width of the feature maps decreases as we go deeper into the network,
 the number of feature maps increases. The backbone is then followed by a flattening operation and a regular head made of a
 Multi-Layer Perceptron.
 
+<br>
+
 ### ResNet (Residual Networks)
 
-ResNet (Residual Network) is a groundbreaking CNN architecture that introduced skip connections to solve the degradation
-problem in deep networks. It was first introduced by He et al. in 2015. Traditional deep networks faced two major issues:
+ResNet is a very important architecture that introduced a fundamental innovation: the skip connection. Before ResNet, deep learning models could not go very deep in terms of number of layers. Indeed, after a certain point, going deeper was hurting performances instead of helping them. This pointed to problems in the optimization algorithm, because a deeper network should have at worst an identical performance to a shallower network. Indeed, the optimizer could transform the additional layers into the identity function and recover the shallower network exactly.
+
+The fact that this does not happen means that the optimizer has a hard time transforming the last layers in the identity
+function, and so it converges to a suboptimal solution that makes the second network WORSE than the first. This is
+largely due to the so-called vanishing gradient(opens in a new tab) problem.
+
+ResNet solve this problem by starting very close to the identity function, using the skip connection. In the ResNet block we have two convolutional layers with a ReLU in the middle. The output of these two layers is summed to the input tensor x and then another ReLU is applied on the result. This means that the central part comprising the two layers with the ReLU in the middle is learning the residual, from which comes the name Residual Network, or ResNet for short.
+
+It is easy to see how this block can become the identity function: it is sufficient to put the weights of the kernel of
+the first or the second convolutional layer to zero (or very close to zero). This will produce a feature map after the
+two convolutional layers where each pixel is zero. This is then summed to x, which means our block behaves as the
+identity function because H(x) = x. ResNet (Residual Network) is a groundbreaking CNN architecture that introduced skip connections to solve the degradation problem in deep networks. It was first introduced by He et al. in 2015. Traditional deep networks faced two major issues:
 
 1. Performance degradation with increasing depth
 2. Vanishing gradient problem
@@ -2395,31 +2407,24 @@ $H(x) = 0 + x = x$
 
 ```
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
-        super(ResidualBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels,
-                              kernel_size=3, stride=stride, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels,
-                              kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+    def __init__(self, inp, out1, out2):
+        super().__init__()
 
-        # Skip connection with dimension matching if needed
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_channels != out_channels:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels,
-                         kernel_size=1, stride=stride),
-                nn.BatchNorm2d(out_channels)
-            )
+        self.conv_block = nn.Sequential(
+            nn.Conv2d(inp, out1, 3),
+            nn.ReLU(),
+            nn.Conv2d(out1, out2, 3)
+        )
+        self.relu = nn.ReLU()
 
     def forward(self, x):
-        residual = x
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(residual)
-        out = F.relu(out)
-        return out
+        # F(x)
+        F = self.conv_block(x)
+        # IMPORTANT BIT: we sum the result of the
+        # convolutions to the input image
+        H = F + x
+        # Now we apply ReLU and return
+        return self.relu(H)
 ```
 
 #### Advantages
@@ -2460,66 +2465,8 @@ class ResidualBlock(nn.Module):
 This architecture has become a fundamental building block in modern deep learning, enabling the development of much
 deeper and more powerful networks.
 
-### ResNet (Udacity Note)
-
-ResNet is a very important architecture that introduced a fundamental innovation: the skip connection.
-
-Before ResNet, deep learning models could not go very deep in terms of number of layers. Indeed, after a certain point,
-going deeper was hurting performances instead of helping them.
-
-This pointed to problems in the optimization algorithm, because a deeper network should have at worst an identical
-performance
-to a shallower network. Indeed, the optimizer could transform the additional layers into the identity function and
-recover
-the shallower network exactly.
-
-The fact that this does not happen means that the optimizer has a hard time transforming the last layers in the identity
-function, and so it converges to a suboptimal solution that makes the second network WORSE than the first. This is
-largely
-due to the so-called vanishing gradient(opens in a new tab) problem.
-
-How does ResNet solve this problem? By starting very close to the identity function, using the skip connection:
-
-In the ResNet block we have two convolutional layers with a ReLU in the middle. The output of these two layers is summed
-to the input tensor x and then another ReLU is applied on the result.
-
-This means that the central part comprising the two layers with the ReLU in the middle is learning the residual, from
-which
-comes the name Residual Network, or ResNet for short.
-
-It is easy to see how this block can become the identity function: it is sufficient to put the weights of the kernel of
-the first or the second convolutional layer to zero (or very close to zero). This will produce a feature map after the
-two convolutional layers where each pixel is zero. This is then summed to x, which means our block behaves as the
-identity
-function because H(x) = x.
-
-With this simple trick we can now go very deep (up to hundreds of layers) and increase significantly the performance of
-the
-network.
-
-We can implement the ResNet block in PyTorch as follows:
-
-```
-class ResidualBlock(nn.Module):
-    def __init__(self, inp, out1, out2):
-        super().__init__()
-
-        self.conv_block = nn.Sequential(
-            nn.Conv2d(inp, out1, 3),
-            nn.ReLU(),
-            nn.Conv2d(out1, out2, 3)
-        )
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        # F(x)
-        F = self.conv_block(x)
-        # IMPORTANT BIT: we sum the result of the
-        # convolutions to the input image
-        H = F + x
-        # Now we apply ReLU and return
-        return self.relu(H)
-```
+<br>
+<br>
 
 ### Fixed Input Size and Global Average Pooling (GAP)
 
