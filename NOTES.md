@@ -3836,62 +3836,46 @@ treat one-stage object detection.
 ### One-Stage Object Detection: RetinaNet
 
 The RetinaNet network is an example of a one-stage object detection algorithm. Like many similar algorithms, it uses
-anchors
-to detect objects at different locations in the image, with different scales and aspect ratios.
-
-Anchors are windows with different sizes and different aspect ratios, placed in the center of cells defined by a grid on
-the image:
+anchors to detect objects at different locations in the image, with different scales and aspect ratios. Anchors are
+windows with different sizes and different aspect ratios, placed in the center of cells defined by a grid on the image:
 
 We divide the image with a regular grid. Then for each grid cell we consider a certain number of windows with different
 aspect ratios and different sizes. We then "anchor" the windows in the center of each cell. If we have 4 windows and 45
 cells, then we have 180 anchors.
 
 We run a localization network considering the content of each anchor. If the class scores for a particular class are
-high
-for an anchor, then we consider that object detected for that anchor, and we take the bounding box returned by the
-network
-as the localization of that object.
-
-This tends to return duplicated objects, so we post-process the output with an algorithm like Non Maximum Suppression
+high for an anchor, then we consider that object detected for that anchor, and we take the bounding box returned by the
+network as the localization of that object. This tends to return duplicated objects, so we post-process the output with
+an algorithm like Non Maximum Suppression
 
 ### Feature Pyramid Networks (FPNs)
 
-RetinaNet uses a special backbone called Feature Pyramid Network.
-
-The Feature Pyramid Network(opens in a new tab) is an architecture that extracts multi-level, semantically-rich feature
-maps from an image:
+RetinaNet uses a special backbone called Feature Pyramid Network. The Feature Pyramid Network(opens in a new tab) is an
+architecture that extracts multi-level, semantically-rich feature maps from an image:
 
 <br>
 <img src="images/fpn.png" alt="Customer" width="600" height=auto>
 <br>
 
 A regular CNN backbone of convolution, pooling, and other typical CNN layers is used to extract multiple feature maps
-from
-the original image (downsampling path). The last feature map contains the most semantic-rich representation, which is
-also
-the least detailed because of the multiple pooling. So, we copy that to the upsampling path and run object detection
-with
-anchors on that. Then, we upsample it and sum it to the feature map from the same level in the downsampling path. This
-means
-we are mixing the high-level, abstract information from the feature map in the upsampling path to the more detailed view
-from
-the downsampling path. We then run object detection on the result. We repeat this operation several times (3 times in
-total in
-this diagram). This is how RetinaNet uses the Feature Pyramid Network:
+from the original image (downsampling path). The last feature map contains the most semantic-rich representation, which
+is also the least detailed because of the multiple pooling. So, we copy that to the upsampling path and run object
+detection with anchors on that. Then, we upsample it and sum it to the feature map from the same level in the
+downsampling path. This means we are mixing the high-level, abstract information from the feature map in the upsampling
+path to the more detailed view from the downsampling path. We then run object detection on the result. We repeat this
+operation several times (3 times in total in this diagram). This is how RetinaNet uses the Feature Pyramid Network:
 
 <br>
 <img src="images/retina_net.png" alt="Customer" width="600" height=auto>
 <br>
 
 RetinaNet conducts object classification and localization by independently employing anchors at each Feature Pyramid
-level.
-The diagram above illustrates that the classification subnet and the box regression subnet pass through four
-convolutional
-layers with 256 filters. Subsequently, they undergo convolutional layers with KA and 4A filters for the classification
-and
-localization, respectively.
+level. The diagram above illustrates that the classification subnet and the box regression subnet pass through four
+convolutional layers with 256 filters. Subsequently, they undergo convolutional layers with KA and 4A filters for the
+classification and localization, respectively.
 
-Focal Loss
+### Focal Loss
+
 The third innovative feature of RetinaNet is the so-called Focal Loss.
 
 <br>
@@ -3906,111 +3890,94 @@ confident on the background. The normal cross-entropy loss assigns a low but non
 examples. For example, let's look at the blue curve here:
 
 Here we are considering for simplicity a binary classification problem. Let's consider an example having a positive
-label.
-If our network has a confidence on the positive label of 0.8, it means it is classifying this example pretty well: it is
-assigning the right label, with a good confidence of 0.8. However, the loss for this example is still around 0.5. Let's
-now consider a different positive example, where the network is assigning a probability for the positive class of 0.1.
-This is a False Negative, and the loss accordingly is pretty high (around 4). Let's now assume that we have 10 examples
-where the network is correct and has a confidence of 0.8 (and loss of 0.5), and one example where the network is wrong
-and
-has a loss of 4. The ten examples will have a cumulative loss of 0.5 x 10 = 5, which is larger than 4. In other words,
-the
-cumulative loss of the examples that are already classified well is going to dominate over the loss of the example that
-is
-classified wrong. This means that the backpropagation will try to make the network more confident on the 10 examples it
-is
-already classifying well, instead of trying to fix the one example where the network is wrong. This has catastrophic
-consequences
-for networks like RetinaNet, where there are usually tens of thousands of easy background anchors for each anchor
-containing
-an object.
+label. If our network has a confidence on the positive label of 0.8, it means it is classifying this example pretty
+well:
+
+it is assigning the right label, with a good confidence of 0.8. However, the loss for this example is still around 0.5.
+Let's now consider a different positive example, where the network is assigning a probability for the positive class of
+0.1. This is a False Negative, and the loss accordingly is pretty high (around 4). Let's now assume that we have 10
+examples where the network is correct and has a confidence of 0.8 (and loss of 0.5), and one example where the network
+is wrong and has a loss of 4. The ten examples will have a cumulative loss of 0.5 x 10 = 5, which is larger than 4. In
+other words, the cumulative loss of the examples that are already classified well is going to dominate over the loss of
+the example that is classified wrong. This means that the backpropagation will try to make the network more confident on
+the 10 examples it is already classifying well, instead of trying to fix the one example where the network is wrong.
+This has catastrophic consequences for networks like RetinaNet, where there are usually tens of thousands of easy
+background anchors for each anchor containing an object.
 
 The Focal Loss adds a factor in front of the normal cross-entropy loss to dampen the loss due to examples that are
-already
-well-classified so that they do not dominate. This factor introduces a hyperparameter γ: the larger γ, the more the loss
-of well-classified examples is suppressed.
+already well-classified so that they do not dominate. This factor introduces a hyperparameter γ: the larger γ, the more
+the loss of well-classified examples is suppressed.
 
-RetinaNet Summary
 Summarizing, RetinaNet is characterized by three key features:
 
 1. Anchors
 2. Feature Pyramid Networks
 3. Focal loss
 
-### Object Detection Metrics
+<br>
+
+## Object Detection Metrics
 
 ### Precision and Recall Definitions in Machine Learning
 
-## I. Precision
-
-### Definition
+#### Precision
 
 "Precision is the ratio of correctly predicted positive observations to the total predicted positive observations."
 
-### Formula
-
 $Precision = \frac{True \space Positives}{True \space Positives + False \space Positives}$
 
-### Interpretation
+#### Interpretation
 
 - "Of all the items we predicted as positive, what fraction were actually positive?"
 - Measures the accuracy of positive predictions
 - Focus on **quality** of positive predictions
-
-### Example
 
 In a spam email detection system:
 
 - Precision = (Correctly identified spam emails) / (Total emails identified as spam)
 - High precision means low false alarm rate
 
-## II. Recall
-
-### Definition
+#### Recall
 
 "Recall is the ratio of correctly predicted positive observations to all actual positive observations."
 
-### Formula
-
 $Recall = \frac{True \space Positives}{True \space Positives + False \space Negatives}$
 
-### Interpretation
+#### Interpretation
 
 - "Of all the actual positive items, what fraction did we predict correctly?"
 - Measures completeness of positive predictions
 - Focus on **coverage** of positive cases
-
-### Example
 
 In a disease detection system:
 
 - Recall = (Correctly identified sick patients) / (Total actually sick patients)
 - High recall means few missed positive cases
 
-## III. Relationship
+### Relationship
 
-### Trade-off
+#### Trade-off
 
 - Often inverse relationship between precision and recall
 - Improving one typically decreases the other
 - Balance depends on application needs
 
-### F1 Score
+#### F1 Score
 
 $F1 = 2 \times \frac{Precision \times Recall}{Precision + Recall}$
 
 - Harmonic mean of precision and recall
 - Single score balancing both metrics
 
-## IV. Use Cases
+### Use Cases
 
-### High Precision Priority
+#### High Precision Priority
 
 - Spam Detection
 - Content Recommendation
 - Product Quality Control
 
-### High Recall Priority
+#### High Recall Priority
 
 - Medical Diagnosis
 - Fraud Detection
@@ -4018,10 +3985,7 @@ $F1 = 2 \times \frac{Precision \times Recall}{Precision + Recall}$
 - Criminal Investigation
 
 Remember: The choice between optimizing for precision vs. recall depends on the relative costs of false positives vs.
-false
-negatives in your specific application.
-
-## I. Basic Definitions
+false negatives in your specific application.
 
 ### Precision
 
@@ -4037,31 +4001,31 @@ $Recall = \frac{True \space Positives}{True \space Positives + False \space Nega
 - Measures ability to find all positive cases
 - "How many of the actual positives did we find?"
 
-## II. Confusion Matrix Components
+#### Confusion Matrix Components
 
 |                   | Predicted Positive   | Predicted Negative   |
 |-------------------|----------------------|----------------------|
 | Actually Positive | True Positives (TP)  | False Negatives (FN) |
 | Actually Negative | False Positives (FP) | True Negatives (TN)  |
 
-## III. Related Metrics
+### Related Metrics
 
-### 1. F1 Score
+#### F1 Score
 
 $F1 = 2 \times \frac{Precision \times Recall}{Precision + Recall}$
 
 - Harmonic mean of precision and recall
 - Balances both metrics
 
-### 2. Accuracy
+#### Accuracy
 
 $Accuracy = \frac{True \space Positives + True \space Negatives}{Total \space Samples}$
 
-### 3. Specificity
+#### Specificity
 
 $Specificity = \frac{True \space Negatives}{True \space Negatives + False \space Positives}$
 
-## IV. Trade-offs
+### Trade-offs
 
 1. **Precision-Recall Trade-off**:
 
@@ -4109,74 +4073,74 @@ This understanding of precision and recall is crucial for:
 - Threshold optimization
 - Application-specific tuning
 
-# Lecture Note: Classification Metrics and Confusion Matrix
+## Classification Metrics and Confusion Matrix
 
-## I. Fundamental Concepts
+### Fundamental Concepts
 
-### 1. True Positives (TP)
+#### True Positives (TP)
 
 - Cases where model predicted YES, and actual was YES
 - Example: Predicted cancer when cancer was present
 - Formula contribution: Correctly identified positive cases
 
-### 2. True Negatives (TN)
+#### True Negatives (TN)
 
 - Cases where model predicted NO, and actual was NO
 - Example: Predicted no cancer when cancer was absent
 - Formula contribution: Correctly identified negative cases
 
-### 3. False Positives (FP) - Type I Error
+#### False Positives (FP) - Type I Error
 
 - Cases where model predicted YES, but actual was NO
 - Example: Predicted cancer when cancer was absent
 - Also known as "False Alarm" or "Type I Error"
 
-### 4. False Negatives (FN) - Type II Error
+#### False Negatives (FN) - Type II Error
 
 - Cases where model predicted NO, but actual was YES
 - Example: Predicted no cancer when cancer was present
 - Also known as "Miss" or "Type II Error"
 
-## II. Confusion Matrix
+### Confusion Matrix
 
 |                   | Predicted Positive   | Predicted Negative   |
 |-------------------|----------------------|----------------------|
 | Actually Positive | True Positives (TP)  | False Negatives (FN) |
 | Actually Negative | False Positives (FP) | True Negatives (TN)  |
 
-## III. Key Metrics Derived
+### Key Metrics Derived
 
-### 1. Precision (Positive Predictive Value)
+#### Precision (Positive Predictive Value)
 
 $Precision = \frac{TP}{TP + FP}$
 
 - Focus on prediction quality
 - "When we predict positive, how often are we right?"
 
-### 2. Recall (Sensitivity)
+#### Recall (Sensitivity)
 
 $Recall = \frac{TP}{TP + FN}$
 
 - Focus on finding all positives
 - "What proportion of actual positives do we catch?"
 
-### 3. Specificity
+#### Specificity
 
 $Specificity = \frac{TN}{TN + FP}$
 
 - Focus on negative case identification
 - "What proportion of actual negatives do we identify?"
 
-### 4. Accuracy
+#### Accuracy
 
 $Accuracy = \frac{TP + TN}{TP + TN + FP + FN}$
 
 - Overall correctness
 - "What proportion of all predictions are correct?"
 
-## IV. Impact on Model Evaluation
+### Impact on Model Evaluation
 
-### 1. High Stakes Scenarios
+#### High Stakes Scenarios
 
 - Medical Diagnosis:
     - FN could mean missing a disease
@@ -4185,45 +4149,45 @@ $Accuracy = \frac{TP + TN}{TP + TN + FP + FN}$
     - FN means missing fraud
     - FP means flagging legitimate transactions
 
-### 2. Cost Considerations
+#### Cost Considerations
 
 - FP Cost vs FN Cost
 - Business Impact
 - Resource Allocation
 
-## V. Improving Different Metrics
+### Improving Different Metrics
 
-### 1. To Reduce False Positives
+#### To Reduce False Positives
 
 - Increase prediction threshold
 - More conservative model
 - Better feature selection
 
-### 2. To Reduce False Negatives
+#### To Reduce False Negatives
 
 - Lower prediction threshold
 - More sensitive model
 - Additional relevant features
 
-### 3. Balance Considerations
+#### Balance Considerations
 
 - Domain-specific requirements
 - Cost-benefit analysis
 - Regulatory requirements
 
-## VI. Real-world Applications
+### Real-world Applications
 
-### 1. Medical Testing
+#### Medical Testing
 
 - FN: Missing a disease (critical)
 - FP: Unnecessary further testing
 
-### 2. Spam Detection
+#### Spam Detection
 
 - FN: Spam in inbox
 - FP: Important email in spam folder
 
-### 3. Security Systems
+#### Security Systems
 
 - FN: Missing a threat
 - FP: False alarms
@@ -4236,14 +4200,11 @@ Understanding these basic components is crucial for:
 - Cost-sensitive learning
 - Risk assessment
 
-Intersection over Union (IoU)
+### Intersection over Union (IoU)
 
 The IoU is a measure of how much two boxes (or other polygons) coincide. As the name suggests, it is the ratio between
-the
-area of the intersection, or overlap, and the area of the union of the two boxes or polygons:
-
-IoU is a fundamental concept useful in many domains, and is a key metric for the evaluation of object detection
-algorithms.
+the area of the intersection, or overlap, and the area of the union of the two boxes or polygons: IoU is a fundamental
+concept useful in many domains, and is a key metric for the evaluation of object detection algorithms.
 
 <br>
 <img src="images/bird.png" alt="Customer" width="600" height=auto>
@@ -4266,33 +4227,23 @@ The formula calculates the mean of Average Recall values across K different clas
 values and dividing by K.
 
 Let’s say we have a number of classes. We consider all the binary classification problems obtained by considering each
-class in turn as positive and all the others as negative.
-
-For each one of these binary sub-problems, we start by drawing the precision-recall curve that is obtained by measuring
-precision and recall for different confidence level thresholds, while keeping the IoU threshold fixed (for example at
-0.5).
-The confidence level is the classification confidence level, i.e., the maximum of the softmax probabilities coming out
-of
-the classification head. For example, we set the confidence threshold to 0.9 and measure precision and recall, then we
-change the threshold to say 0.89 and measure precision and recall, and so on, until we get to a threshold of 0.1. This
-constitutes our precision-recall curve:
+class in turn as positive and all the others as negative. For each one of these binary sub-problems, we start by drawing
+the precision-recall curve that is obtained by measuring precision and recall for different confidence level thresholds,
+while keeping the IoU threshold fixed (for example at 0.5). The confidence level is the classification confidence level,
+i.e., the maximum of the softmax probabilities coming out of the classification head. For example, we set the confidence
+threshold to 0.9 and measure precision and recall, then we change the threshold to say 0.89 and measure precision and
+recall, and so on, until we get to a threshold of 0.1. This constitutes our precision-recall curve:
 
 We then interpolate the precision and recall curve we just obtained by using a monotonically-decreasing interpolation
-curve,
-and we take the area under the curve. This represents the so-called Average Precision (AP) for this class:
+curve, and we take the area under the curve. This represents the so-called Average Precision (AP) for this class:
 
 We repeat this procedure for all classes, then we take the average of the different APs and call that mean Average
-Precision,
-or mAP. A related metric is called mean Average Recall (mAR). Similarly to the mAP, we split our problem into a number
-of
-binary classification problems. For each class, we compute the recall curve obtained by varying this time the IoU
-threshold
-from 0.5 to 1. We can now consider the integral of the curve. Since we integrate between 0.5 and 1, and Recall is a
-quantity
-bounded between 0 and 1, the integral would be bounded between 0 and 0.5. We therefore multiply by 2 to make it a
-quantity
-bounded between 0 and 1. Twice the area under the recall curve represents the so-called Average Recall (AR) for this
-class:
+Precision, or mAP. A related metric is called mean Average Recall (mAR). Similarly to the mAP, we split our problem into
+a number of binary classification problems. For each class, we compute the recall curve obtained by varying this time
+the IoU threshold from 0.5 to 1. We can now consider the integral of the curve. Since we integrate between 0.5 and 1,
+and Recall is a quantity bounded between 0 and 1, the integral would be bounded between 0 and 0.5. We therefore multiply
+by 2 to make it a quantity bounded between 0 and 1. Twice the area under the recall curve represents the so-called
+Average Recall (AR) for this class:
 
 We then take the average of the AR over the different classes, to define the mean Average Recall, or mAR.
 
@@ -4359,7 +4310,7 @@ RetinaNet combines these components to achieve effective object detection:
 | Average Recall (AR)          | Area under the recall vs IoU curve                |
 | Mean Average Recall (mAR)    | Average over all classes of the Average Recall    |
 
-Additional Notes:
+#### Additional Notes:
 
 - AP measures performance for a single class
 - mAP measures overall model performance across all classes
@@ -4406,8 +4357,7 @@ low-dimensional representation.
 
 Then the decoder architecture starts from the same representation and constructs the output mask by using transposed
 convolutions. However, the UNet adds skip connections between the feature maps at the same level in the encoder and in
-the decoder, as
-shown below:
+the decoder, as shown below:
 
 <br>
 <img src="images/unet.png" alt="Customer" width="600" height=auto>
@@ -4482,9 +4432,7 @@ loss = smp.losses.DiceLoss(smp.losses.BINARY_MODE, from_logits=True)
 
 We start from the formula of the F1 score:
 
-```
 $F_1 = \frac{2TP}{2TP + FN + FP}$
-```
 
 <br>
 
@@ -4522,24 +4470,18 @@ Variables explained:
 
 Let's start with how we compute $TP$:
 
-```
 $TP = \sum_{i=1}^{n_{\text{pix}}} p_iy_i$
-```
 
 Since $y_i$ is either 0 or 1, the sum over all pixels is equivalent to the sum of the $p_i$ limited to pixels where
 $y_i$ is equal to 1. The higher the $p_i$ is for this subset, the more the network is confident that the positive pixels
 are indeed positive, the higher the "continuous" TP value will be. For the denominator of $F_1$ expression:
 
-```
 $2TP + FN + FP = \sum_{i=1}^{n_{\text{pix}}} p_i + \sum_{i=1}^{n_{\text{pix}}} y_i = \sum_{i=1}^{n_{\text{pix}}}(p_i +
 y_i)$
-```
 
 The "continuous" version of the $F_1$ score - called the Dice coefficient - is:
 
-```
 $\text{Dice coeff} = \frac{2\sum_{i=1}^{n_{\text{pix}}} p_iy_i}{\sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)}$
-```
 
 Properties:
 
@@ -4549,9 +4491,7 @@ Properties:
 
 Finally, the Dice loss is defined as:
 
-```
 $\text{Dice loss} = 1 - \frac{2\sum_{i=1}^{n_{\text{pix}}} p_iy_i}{\sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)}$
-```
 
 <br>
 <br>
@@ -4639,40 +4579,41 @@ The explanation for each choice:
 
 ### Glossary
 
-Object localization: The task of determining if an image contains an object, and localize it with a bounding box.
+**Object localization**: The task of determining if an image contains an object, and localize it with a bounding box.
 
-Bounding box: A rectangular box that completely encloses a given object in an image, whose sides are parallel to the
+**Bounding box**: A rectangular box that completely encloses a given object in an image, whose sides are parallel to the
 sides of the image.
 
-Multi-head model: A CNN where we have one backbone but more than one head.
+**Multi-head model**: A CNN where we have one backbone but more than one head.
 
-Object detection: The task of localizing using a bounding box every object of interest in an image.
+**Object detection**: The task of localizing using a bounding box every object of interest in an image.
 
-Anchors: Windows with different sizes and different aspect ratios, placed in the center of cells defined by a grid on an
+**Anchors**: Windows with different sizes and different aspect ratios, placed in the center of cells defined by a grid
+on an
 image.
 
-Feature Pyramid Network (FPN): An architecture that extracts multi-level, semantically-rich feature maps from an image.
+**Feature Pyramid Network (FPN)**: An architecture that extracts multi-level, semantically-rich feature maps from an
+image.
 
-Focal Loss: A modification of the Cross-Entropy Loss, **by **including a factor in front of the CE Loss to dampen the
-loss
-due to examples that are already well-classified, so they do not dominate.
+**Focal Loss**: A modification of the Cross-Entropy Loss, **by **including a factor in front of the CE Loss to dampen
+the
+loss due to examples that are already well-classified, so they do not dominate.
 
-Mean Average Recall (mAR): A metric for object detection algorithms. It is obtained by computing the Average Recall for
+**Mean Average Recall (mAR)**: A metric for object detection algorithms. It is obtained by computing the Average Recall
+for
 each class of objects, as twice the integral of the Recall vs IoU curve, and then by averaging the Average Recall for
 each class.
 
-Mean Average Precision (mAP): A metric for object detection algorithms. It is obtained by computing the Average
-Precision
-(AP) for each class. The AP is computed by integrating an interpolation of the Precision-Recall curve. The mAP is the
-mean
-average of the AP over the classes.
+**Mean Average Precision (mAP)**: A metric for object detection algorithms. It is obtained by computing the Average
+Precision(AP) for each class. The AP is computed by integrating an interpolation of the Precision-Recall curve. The mAP
+is the mean average of the AP over the classes.
 
-Intersection over Union (IoU): The ratio between the area of the intersection, or overlap, and the area of the union of
+**Intersection over Union (IoU)**: The ratio between the area of the intersection, or overlap, and the area of the union of
 two boxes or polygons. Used to measure how much two boxes coincide.
 
-Semantic segmentation: The task of assigning a class to each pixel in an image.
+**Semantic segmentation**: The task of assigning a class to each pixel in an image.
 
-Dice loss: A useful measure of loss for semantic segmentation derived from the F1 score, which is the geometric mean of
+**Dice loss**: A useful measure of loss for semantic segmentation derived from the F1 score, which is the geometric mean of
 precision and recall. The Dice loss tends to balance precision and recall at the pixel level.
 
 A confusion matrix is a table/visualization that shows how well a classification model performs. For example, in a
