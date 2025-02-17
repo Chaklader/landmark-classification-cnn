@@ -85,15 +85,32 @@ Customers: Consumer of the product; we should always consider the customers' and
 
 
 <br>
+<img src="images/pre.png" alt="Customer" width="600" height=auto>
 <br>
 
 
-## Flattening
+1. Vector - an array of numbers with only one dimension
+2. Matrix - an array of numbers with two dimensions
+3. Array or tensor - two interchangeable generic terms which can mean arrays with one, two, or n dimensions
+Computer Interpretation of Images
 
-Suppose we want to use an MLP to classify our image. The problem is, the network takes a 1d array as input, while we
-have
-images that are 28x28 matrices. The obvious solution is to flatten the matrix, i.e., to stack all the rows of the matrix
-in one long 1D vector, as in the image below.
+
+An image is seen by the computer as an array of values (a matrix).
+
+The images in the MNIST dataset are 28 x 28 and 8-bit grayscale. This means that the computer represents each one of them as a square matrix of 28 x 28 elements, where the value in the element of the matrix represents the light intensity with a range of 0 to 255: 0 means pure black and 255 means pure white.
+
+We already know how to perform classification with neural networks, and in particular with a Multi-Layer Perceptron. This network takes as input a grayscale image (a matrix) and outputs a vector of scores or a vector of probabilities (one for each class). The class corresponding to the maximum of that vector corresponds to the best guess for the label of the image.
+
+### Flattening
+
+Suppose we want to use an MLP to classify our image. The problem is, the network takes a 1d array as input, while we have images that are 28x28 matrices. The obvious solution is to flatten the matrix, i.e., to stack all the rows of the matrix in one long 1D vector, as in the image below.
+
+
+<br>
+<img src="images/flat.png" alt="Customer" width="600" height=auto>
+<br>
+
+
 
 ## Loss Function
 
