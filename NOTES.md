@@ -2614,9 +2614,8 @@ Summarizing, there are currently 3 categories of computer vision models:
    CoatNet
 
 As a final note, Transformers are now becoming even more important because they form the basis for multi-modal models -
-models that deal with, for example, image and text simultaneously. Examples of these
-are Open AI's CLIP and Google's ImageGen(opens in a
-new tab).
+models that deal with, for example, image and text simultaneously. Examples of these are Open AI's CLIP and Google's
+ImageGen.
 
 ### Q#1: Match the architecture with its main innovation/characteristic.
 
@@ -2678,41 +2677,35 @@ different dataset. While training from scratch requires large datasets and a lot
 applied successfully on much smaller datasets without the need for large computational resources.
 
 A normal CNN extracts more and more abstract features the deeper you go in the network. This means that the initial
-layers,
-which extract elementary features such as edges and colors, are probably pretty general and can be applied similarly on
-many
-different datasets. Instead, the last layers (especially the fully-connected layers) are highly specialized in the task
-they have been trained on.
+layers, which extract elementary features such as edges and colors, are probably pretty general and can be applied
+similarly on many different datasets. Instead, the last layers (especially the fully-connected layers) are highly
+specialized in the task they have been trained on.
 
 Accordingly, in transfer learning we keep the initial layers (that are pretty universal) unchanged or almost unchanged,
-while we change the last layers that must be specialized by task.
+while we change the last layers that must be specialized by task. How many layers we keep or modify slightly, and how
+many layers we change dramatically or even replace, depends on how similar our dataset is to the original dataset and on
+how much data we have. So essentially the transfer-learning workflow consists of taking a pre-trained model, freezing
+some of the initial layers and freeing or substituting some late layers, then training on our dataset.
 
-How many layers we keep or modify slightly, and how many layers we change dramatically or even replace, depends on how
-similar our dataset is to the original dataset and on how much data we have.
+### Getting a Pre-Trained Model with torchvision
 
-So essentially the transfer-learning workflow consists of taking a pre-trained model, freezing some of the initial
-layers
-and freeing or substituting some late layers, then training on our dataset.
+You can find the list of all models supported by torchvision in the official documentation. Then you can load models by
+name. For example, let's load a resnet architecture:
 
-Getting a Pre-Trained Model with torchvision
-You can find the list of all models supported by torchvision in the official documentation(opens in a new tab) (note
-that
-new models are added with each new version, so check that the list you are consulting is appropriate for the version of
-PyTorch you are using). Then you can load models by name. For example, let's load a resnet architecture:
-
+```
 import torchvision.models
-
 model = torchvision.models.resnet18(pretrained=True)
+```
+
 The pretrained=True option indicates that we want the weights obtained after training on ImageNet or some other dataset.
 If we set pretrained=False we get the model initialized with the default initialization, ready to be trained from
 scratch.
 
-Freezing and Thawing Layers and Parameters
-A frozen parameter is a parameter that is not allowed to vary during training. In other words, backpropagation will
-ignore
-that parameter and won't change its value nor compute the gradient of the loss with respect to that parameter.
+### Freezing and Thawing Layers and Parameters
 
-In PyTorch you can freeze all the parameters of a network using the following code:
+A frozen parameter is a parameter that is not allowed to vary during training. In other words, backpropagation will
+ignore that parameter and won't change its value nor compute the gradient of the loss with respect to that parameter. In
+PyTorch you can freeze all the parameters of a network using the following code:
 
 ```
 for param in model.parameters():
@@ -2743,22 +2736,16 @@ model.bn.eval()
 ```
 
 Note that this is different than using model.eval() (which would put the entire model in evaluation mode). You can
-invert
-this operation by putting the BatchNorm layer back into training mode: model.bn.train().
+invert this operation by putting the BatchNorm layer back into training mode: model.bn.train().
 
-Understanding the Architecture We Are Using
 When doing transfer learning, in many cases you need to know the layout of the architecture you are using so you can
-decide
-what to freeze or not to freeze. In particular, you often need either the name or the position of a specific layer in
-the
-network.
+decide what to freeze or not to freeze. In particular, you often need either the name or the position of a specific
+layer in the network. As usual, we do not encourage the use of print(model) as the output there does NOT necessarily
+correspond to the execution path coded in the forward method. Instead, use the documentation of the model or export the
+model and visualize it with Netron(opens in a new tab) as explained in the next subsection.
 
-As usual, we do not encourage the use of print(model) as the output there does NOT necessarily correspond to the
-execution
-path coded in the forward method. Instead, use the documentation of the model or export the model and visualize it with
-Netron(opens in a new tab) as explained in the next subsection.
+### Visualizing an Architecture with Netron
 
-Visualizing an Architecture with Netron
 Netron is a web app, so you do not need to install anything locally. First we need to export the model:
 
 ```
@@ -2771,23 +2758,23 @@ scripted = torch.jit.trace(model, random_image)
 torch.jit.save(scripted, "my_network.pt")
 ```
 
-Then we can go to Netron(opens in a new tab) and load this file. Once the architecture has been loaded, press Crtl+U to
-visualize the name of each layer. For example, this is the last part of a ResNet architecture:
-
-Transfer learning involves taking a pre-trained neural network trained on a source dataset (for example, Imagenet) and
-adapting it to a new, different dataset, typically a custom dataset for a specific problem.
+Then we can go to Netron and load this file. Once the architecture has been loaded, press Crtl+U to visualize the name
+of each layer. Transfer learning involves taking a pre-trained neural network trained on a source dataset (for example,
+Imagenet) and adapting it to a new, different dataset, typically a custom dataset for a specific problem.
 
 There are different types of transfer learning and different strategies that you can use depending on:
 
-The size of your dataset
-How similar your dataset is to the original dataset that the network was trained on (e.g., ImageNet)
+- The size of your dataset
+- How similar your dataset is to the original dataset that the network was trained on (e.g., ImageNet)
+
 We can schematize the different possibilities like this:
 
 <br>
 <img src="images/fine-tune.png" alt="fine-tune.png" width="600" height=auto>
 <br>
 
-Dataset Size
+### Dataset Size
+
 It is difficult to define what a small dataset or a large dataset is exactly. However, for a typical classification
 example, a small dataset is in the range of 1000-10,000 images. A large dataset can have 100,000 images or more. These
 boundaries also change significantly depending on the size of the model you are using. A dataset that is large for a
@@ -2795,15 +2782,18 @@ ResNet18 model (a ResNet with 18 layers) could be small for a ResNet150 architec
 latter has many more parameters and a much larger capacity so it needs more data. In general, the larger the model, the
 more data it needs.
 
-Dataset Similarity
+### Dataset Similarity
+
 Similarly, it is sometimes difficult to judge whether a target dataset is similar to the source dataset. For example, if
 the source dataset is Imagenet and the target dataset is of natural images, then the two datasets are pretty similar.
 However, if the target is medical images then the datasets are fairly dissimilar. However, it must be noted that CNNs
 look at images differently than we do, so sometimes datasets that look different to us are sufficiently similar for the
 model, and vice-versa. It is important to experiment and verify our assumptions.
 
-Size of Dataset: What to Do
-Small target dataset, similar to the source dataset: Train the head
+### Size of Dataset: What to Do
+
+#### Small target dataset, similar to the source dataset: Train the head
+
 This is a typical case, and the case where transfer learning really shines. We can use the pre-trained part of the
 network to extract meaningful feature vectors and use them to classify our images.
 
@@ -2860,24 +2850,28 @@ rather quickly. It is likely that you will have to train for much less time than
 scratch. Be careful with overfitting and do not overtrain! If needed, also add more image augmentations, weight decay,
 and other regularization techniques.
 
-Large dataset, at least somewhat similar to the original dataset: Fine-tune the entire network
+<br>
+
+#### Large dataset, at least somewhat similar to the original dataset: Fine-tune the entire network
+
 If we have more data and/or the task is not very similar to the task that the network was originally trained to solve,
-then we are going to get better performances by fine-tuning the entire network.
+then we are going to get better performances by fine-tuning the entire network. We start by performing the same
+procedure as the previous case: we remove the existing head, we freeze everything, and we add our own head, then we
+train
+for a few epochs. Typically, 1 or 2 epochs are sufficient.
 
-We start by performing the same procedure as the previous case: we remove the existing head, we freeze everything and we
-add our own head, then we train for a few epochs. Typically 1 or 2 epochs are sufficient.
-
-We then free all the layers and we train until convergence (until the validation loss stops decreasing). We need to be
-very
-careful to use a conservative learning rate, to avoid destroying what the network has learned during the original task.
-A good choice is typically a value between 2 and 10 times smaller than the learning rate we used to train the head. As
-usual, experimentation is typically needed to find the best learning rate for this phase.
+We then free all the layers, and we train until convergence (until the validation loss stops decreasing). We need to be
+very careful to use a conservative learning rate, to avoid destroying what the network has learned during the original
+task. A good choice is typically a value between 2 and 10 times smaller than the learning rate we used to train the
+head. As usual, experimentation is typically needed to find the best learning rate for this phase.
 
 A more advanced technique that works well in practice is to use a different learning rate for every layer(opens in a new
 tab). You start with using the maximum learning rate for the last layer and you gradually decrease the learning rate for
 layers deeper into the network until you reach the minimum for the first convolutional layer.
 
-Large dataset, very different than the original dataset: Train from scratch
+<br>
+
+#### Large dataset, very different than the original dataset: Train from scratch
 
 In this situation, fine-tuning does not give us better performance or faster training. We are better off just training
 from scratch. We can still take advantage of good architectures that performed well on ImageNet, since they are likely
@@ -2892,37 +2886,32 @@ import torchvision.models
 model = torchvision.models.resnet18(pretrained=False)
 ```
 
-Small dataset, very different than the original dataset: Gather more data or use semi-supervised learning
-This is the hardest situation. If you have tried fine-tuning just the head and it did not perform well enough, and
-fine-tuning
-more layers resulted in overfitting, you probably need to either collect more data or look into starting from scratch
-and
-use semi-supervised learning(opens in a new tab)
+#### Small dataset, very different than the original dataset
 
-Other situations
-When it is not clear whether you are in any of the situations described above, you can take approaches that are
-in-between.
+This is the hardest situation - Gather more data or use semi-supervised learning. If you have tried fine-tuning just the
+head and it did not perform well enough, and fine-tuning more layers resulted in overfitting, you probably need to
+either collect more data or look into starting from scratch and use semi-supervised learning
+
+Other situations When it is not clear whether you are in any of the situations described above, you can take approaches
+that are in-between.
 
 For example, when you have a dataset that is not very small but not very large either, you might get good performances
 by fine-tuning not only the head, but also a few of the last convolutional layers or blocks. Indeed, these layers encode
 high-level concepts such as "squares," "triangles," or textures, and therefore can improve by being fine-tuned or even
 trained from scratch on your data. Just free those layers along with the new head and train those, while keeping the
-rest
-fixed. Depending once again on the size of your data and the similarity with the original dataset, you can fine-tune
-these
-layers or reset them and train them from scratch. As usual, it takes a bit of experimentation to find the best solution.
+rest fixed. Depending once again on the size of your data and the similarity with the original dataset, you can
+fine-tune these layers or reset them and train them from scratch. As usual, it takes a bit of experimentation to find
+the best solution.
+
+<br>
 
 ### TIMM: A Very Useful Library for Fine-Tuning
 
 When performing fine-tuning (or training with a predefined architecture), we cannot avoid mentioning the fantastic
-PyTorch
-Image Models (timm) library(opens in a new tab). It contains hundreds of models, many with pre-trained weights, and it
-keeps
-getting updated with the very latest architectures from the research community. It is very easy to use it for transfer
-learning.
-It is an alternative to torchvision that contains many more pretrained models.
-
-First let's install it with:
+PyTorch Image Models (timm) library(opens in a new tab). It contains hundreds of models, many with pre-trained weights,
+and it keeps getting updated with the very latest architectures from the research community. It is very easy to use it
+for transfer learning. It is an alternative to torchvision that contains many more pretrained models. First let's
+install it with:
 
 ```
 pip install timm
@@ -2935,15 +2924,13 @@ n_classes = 196
 model = timm.create_model("convnext_small", pretrained=True, num_classes=n_classes)
 ```
 
-The library already builds a head for you, so you do not need to build one explicitly.
-
 We can now choose to freeze some or all the layers except the last one, depending on the size of our dataset and its
 characteristics, and apply the techniques we discussed before. Note that you do not need to know the details of the
 architecture to be able to make a new head for it, as timm does that for you.
 
-Question 1 of 2:
-Consider the following scenario: you have a dataset of around 5000 labeled images of dogs, and you want to classify the
-different breeds. What is the best strategy to build a model for this dataset?
+### Q#1: Consider the following scenario: you have a dataset of around 5000 labeled images of dogs, and you want to classify
+
+the different breeds. What is the best strategy to build a model for this dataset?
 
 Answer: Select a pre-made architecture and start from the weights that have been obtained after training it on ImageNet,
 then fine-tune the classification head.
@@ -2957,11 +2944,10 @@ Explanation:
     4. Fine-tuning just the classification head is computationally efficient and helps prevent overfitting
     5. Transfer learning from ImageNet is particularly effective for animal classification tasks
 
-Question 2 of 2:
+### Q#2: When doing transfer learning, we can consider different strategies based on the dataset size as well as
 
-When doing transfer learning, we can consider different strategies based on the dataset size as well as its similarity
-with
-the original dataset the architecture was trained on. Can you match the different use cases with the correct strategy?
+its similarity with the original dataset the architecture was trained on. Can you match the different use cases with the
+correct strategy?
 
 | Transfer Learning Strategy                  | Use Case                        |
 |---------------------------------------------|---------------------------------|
@@ -3024,27 +3010,33 @@ Explanation for each case:
 <img src="images/viz.png" alt="Customer" width="600" height=auto>
 <br>
 
-#### Course: CS231n Convolutional Neural Networks for Visual Recognition | Stanford University
+<br>
+<br>
 
 ### Glossary
 
-Skip connection: An innovation of ResNet, this is a path in a network allowing it to jump a layer if needed.
+<br>
 
-Global Average Pooling (GAP) layer: A type of pooling equivalent to Average Pooling, but with the average taken over the
+**Skip connection**: An innovation of ResNet, this is a path in a network allowing it to jump a layer if needed.
+
+**Global Average Pooling (GAP) layer**: A type of pooling equivalent to Average Pooling, but with the average taken over
+the
 entire feature map. It is equivalent to an Average Pooling layer with the window size equal to the input size.
 
-Channel Attention (Squeeze-and-excitation, or SE, block): A little network-in-network that allows the model to pay more
+**Channel Attention (Squeeze-and-excitation, or SE, block)**: A little network-in-network that allows the model to pay
+more
 attention to some feature maps that are more useful than others to classify a specific image.
 
-Self Attention: A mechanism alternative to convolution+pooling and characteristic of the Transformers architecture. It
+**Self Attention**: A mechanism alternative to convolution+pooling and characteristic of the Transformers architecture.
+It
 allows the model to directly learn the relationship between different parts of the image and use it to solve the task at
 hand (e.g., image classification).
 
-Transfer learning: A set of techniques that allow to re-use what a network has learned from a dataset on a different
-dataset.
-It allows us to get very good performances much more quickly, and on smaller datasets, than training from scratch.
+**Transfer learning**: A set of techniques that allow to re-use what a network has learned from a dataset on a different
+dataset. It allows us to get very good performances much more quickly, and on smaller datasets, than training from
+scratch.
 
-Frozen parameter: A parameter that is not allowed to vary during training.
+**Frozen parameter**: A parameter that is not allowed to vary during training.
 
 <br>
 <br>
@@ -3055,16 +3047,10 @@ Frozen parameter: A parameter that is not allowed to vary during training.
 <br>
 
 Autoencoders are a very interesting neural network architecture that can be used for different applications directly (
-anomaly
-detection, denoising, ...), and it is also widely used in larger and modern architectures for other tasks (object
-detection,
-image segmentation).
-
-More advanced versions of autoencoders, such as variational autoencoders, can also be used as generative models, i.e.,
-they
-can learn representations of data and use that representation to generate new realistic images.
-
-In this lesson, you will learn:
+anomaly detection, denoising, ...), and it is also widely used in larger and modern architectures for other tasks (
+object detection, image segmentation). More advanced versions of autoencoders, such as variational autoencoders, can
+also be used as generative models, i.e., they can learn representations of data and use that representation to generate
+new realistic images. In this lesson, you will learn:
 
 1. About linear and CNN-based autoencoders
 2. How to design and train a linear autoencoder for anomaly detection
@@ -3074,30 +3060,18 @@ In this lesson, you will learn:
 
 When studying CNNs for image classification or regression we have seen that the network is essentially composed of two
 parts:
-a backbone that extracts features from the image, and a Multi-Layer Perceptron or similar that uses those features to
-decide
-which class the image belongs to. In-between the two we have a flattening operation (or a Global Average Pooling layer)
-that
-takes the last feature maps coming out of the backbone and transforms them into a 1d array, which is a feature vector.
 
-CNN Structure Image Description
-The image shows a flowchart starting with an input image of a blue car, progressing through layers labeled "conv 1," "
-maxpool,"
-"conv 2," "maxpool," followed by "flatten," and ending with a "fully-connected layer" leading to a final output
-labeled "predicted
-class." The flowchart visually describes how the CNN processes and classifies the input image.
+1. A backbone that extracts features from the image
 
-What are Autoencoders?
+2. Multi-Layer Perceptron or similar that uses those features to decide which class the image belongs to. In-between the
+   two we have a flattening operation (or a Global Average Pooling layer) that takes the last feature maps coming out of
+   the backbone and transforms them into a 1d array, which is a feature vector.
+
 Autoencoders have a similar backbone (called encoder in this context) that produces a feature vector (called embedding
-in this
-context). However, they substitute the fully-connected layers (the head) with a decoder stage whose scope is to
-reconstruct
-the input image starting from the embeddings:
+in this context). However, they substitute the fully-connected layers (the head) with a decoder stage whose scope is to
+reconstruct the input image starting from the embeddings:
 
-This can appear pointless at first glance, but it is actually very useful in many contexts.
-
-Uses of Autoencoders
-We can use autoencoders to:
+This can appear pointless at first glance, but it is actually very useful in many contexts. We can use autoencoders to:
 
 1. Compress data
 2. Denoise data
@@ -3106,43 +3080,38 @@ We can use autoencoders to:
 5. With some modifications, we can use autoencoders as generative models - models capable of generating new images
 
 Autoencoders are also the basis for a whole field of research concerned with metric learning, which is learning
-representations
-of images that can be useful in downstream tasks.
+representations of images that can be useful in downstream tasks.
 
-Unsupervised vs. Supervised Learning
+### Unsupervised vs. Supervised Learning
+
 By looking closer at the structure and the tasks we have just described, you can see that autoencoders do not use the
 information on the label of the image at all. They are only concerned with the image itself, not with its label. The
 tasks that autoencoders address are examples of unsupervised learning, where the algorithm can learn from a dataset
-without any label. Another example of unsupervised learning that you might be familiar with is clustering.
+without any label. Another example of unsupervised learning that you might be familiar with is clustering. CNNs for
+image classification are instead an example of supervised learning, where the network learns to distinguish between
+classes by learning from a labeled dataset.
 
-CNNs for image classification are instead an example of supervised learning, where the network learns to distinguish
-between classes by learning from a labeled dataset.
+### The Loss of Autoencoders
 
-The Loss of Autoencoders
 The autoencoder is concerned with encoding the input to a compressed representation, and then re-constructing the
-original
-image from the compressed representation. The signal to train the network comes from the differences between the input
-and
-the output of the autoencoder.
+original image from the compressed representation. The signal to train the network comes from the differences between
+the input and the output of the autoencoder. For example, let's consider an autoencoder for images. We compare the input
+image to the output image and we want them to be as similar as possible.
 
-For example, let's consider an autoencoder for images. We compare the input image to the output image and we want them
-to
-be as similar as possible.
+To find the right loss for this task, we have different possibilities, but the most common one is the Mean Squared
+Error (MSE) loss. It just considers the square of the difference between each pixel in the input image and the
+corresponding pixel in the output image, so minimizing this loss is equivalent to minimizing the difference of each
+pixel in the input with the corresponding pixel in the output. In practice, this is given by the formula:
 
-What is the right loss for this task?
+<br>
+<br>
 
-We have different possibilities, but the most common one is the Mean Squared Error (MSE) loss. It just considers the
-square
-of the difference between each pixel in the input image and the corresponding pixel in the output image, so minimizing
-this
-loss is equivalent to minimizing the difference of each pixel in the input with the corresponding pixel in the output.
-In
-practice, this is given by the formula:
+### Mean Squared Error (MSE) Formula
 
-### 1. Mean Squared Error (MSE) Formula
-
+```
 $MSE = \frac{1}{n_{\text{rows}}n_{\text{cols}}} \sum_{i=1}^{n_{\text{rows}}} \sum_{j=1}^{n_{\text{cols}}} (x_{ij} -
 \hat{x}_{ij})^2$
+```
 
 Where:
 
@@ -3152,13 +3121,11 @@ Where:
 - $\hat{x}_{ij}$ is the pixel value at position (i,j) in the output image
 - $\sum_{i=1}^{n_{\text{rows}}} \sum_{j=1}^{n_{\text{cols}}}$ represents summation over all pixels
 
+<br>
+
 The MSE loss provides a measure of the average squared difference between corresponding pixels in the input and
-reconstructed
-images, commonly used in image-related tasks like autoencoders and image generation.
-
-You will get a chance in the exercise upcoming to try out this code on your own!
-
-In this first look we have built the simplest autoencoder, which is made up of two linear layers:
+reconstructed images, commonly used in image-related tasks like autoencoders and image generation. In this first look we
+have built the simplest autoencoder, which is made up of two linear layers:
 
 ```
 class Autoencoder(nn.Module):
@@ -3196,11 +3163,9 @@ class Autoencoder(nn.Module):
 ```
 
 We have trained it using the Mean Squared Error (MSE) loss. Of course, we did not use the labels, since anomaly
-detection
-with autoencoders is an unsupervised task.
+detection with autoencoders is an unsupervised task.
 
-Question 1 of 4:
-Below are the parts of an autoencoder. Can you match each of them with the correct description?
+### Q#1: Below are the parts of an autoencoder. Can you match each of them with the correct description?
 
 Answer:
 
@@ -3212,8 +3177,7 @@ Explanation: An autoencoder consists of these three main components working toge
 The encoder compresses the input into a lower-dimensional embedding, and the decoder attempts to reconstruct the
 original input from this embedding.
 
-Question 2 of 4:
-What are autoencoders used for? (Select all that apply)
+### Q#2:  What are autoencoders used for? (Select all that apply)
 
 Answer: All options are valid uses:
 
@@ -3229,8 +3193,7 @@ Explanation: Autoencoders are versatile and can be used for multiple purposes:
 4. Anomaly detection: Can detect abnormal patterns by reconstruction error
 5. Denoising: Can learn to output clean versions of noisy inputs
 
-Question 3 of 4:
-What is unsupervised learning?
+### Q#3:  What is unsupervised learning?
 
 Answer: It means learning without the need for labels
 
@@ -3238,79 +3201,64 @@ Explanation: Unsupervised learning is a type of machine learning where the algor
 explicit labels or supervision. In the context of autoencoders, they learn to reconstruct their input without needing
 any external labels, making them an unsupervised learning technique.
 
-Question 4 of 4:
-When using the Mean Squared Error loss in an autoencoder, what are we comparing?
+### Q#4:  When using the Mean Squared Error loss in an autoencoder, what are we comparing?
 
 Answer: The input image and the output image
 
 Explanation: In autoencoders, MSE loss measures the pixel-wise difference between the input image and its
 reconstruction (output image). This encourages the network to learn to reconstruct its inputs as accurately as possible,
 despite going through a compressed embedding. The formula is:
+
+```
 $MSE = \frac{1}{n_{\text{rows}}n_{\text{cols}}} \sum_{i=1}^{n_{\text{rows}}} \sum_{j=1}^{n_{\text{cols}}} (x_{ij} -
 \hat{x}_{ij})^2$
+```
+
 where $x_{ij}$ is the input pixel and $\hat{x}_{ij}$ is the reconstructed pixel.
 
 We have seen how to use linear layers to create an autoencoder. Since we are working on images, it is natural to use
-convolution
-instead of just linear layers. Convolution allows us to keep spatial information and get a much more powerful
-representation of
-the content of an image.
+convolution instead of just linear layers. Convolution allows us to keep spatial information and get a much more
+powerful representation of the content of an image.
 
 However, this poses a problem: while the encoder section can be just the backbone of a standard CNN, what about the
-decoder part?
-Yes, we could flatten the output of the backbone and then use linear layers to decode. But there are also other ways to
-upsample a
-compact representation into a full-resolution image. For example, we can use a Transposed Convolutional Layer, which can
-learn how
-to best upsample an image. We'll see how that works on the next page.
+decoder part? Yes, we could flatten the output of the backbone and then use linear layers to decode. But there are also
+other ways to upsample a compact representation into a full-resolution image. For example, we can use a Transposed
+Convolutional Layer, which can learn how to best upsample an image. We'll see how that works on the next page.
 
 ### Learnable Upsampling
 
 We have seen how to use linear layers to create an autoencoder. Since we are working on images, it is natural to use
-convolution
-instead of just linear layers. Convolution allows us to keep spatial information and get a much more powerful
-representation of
-the content of an image.
+convolution instead of just linear layers. Convolution allows us to keep spatial information and get a much more
+powerful representation of the content of an image.
 
 However, this poses a problem: while the encoder section can be just the backbone of a standard CNN, what about the
-decoder part?
-Yes, we could flatten the output of the backbone and then use linear layers to decode. But there are also other ways to
-upsample
-a compact representation into a full-resolution image. For example, we can use a Transposed Convolutional Layer, which
-can learn
-how to best upsample an image. We'll see how that works on the next page.
+decoder part? Yes, we could flatten the output of the backbone and then use linear layers to decode. But there are also
+other ways to upsample a compact representation into a full-resolution image. For example, we can use a Transposed
+Convolutional Layer, which can learn how to best upsample an image. We'll see how that works on the next page.
 
 ### Transposed Convolutions
 
 The Transposed Convolution can perform an upsampling of the input with learned weights. In particular, a Transposed
-Convolution
-with a 2 x 2 filter and a stride of 2 will double the size of the input image.
+Convolution with a 2 x 2 filter and a stride of 2 will double the size of the input image.
 
 Whereas a Max Pooling operation with a 2 x 2 window and a stride of 2 reduces the input size by half, a Transposed
-Convolution
-with a 2 x 2 filter and a stride of 2 will double the input size.
+Convolution with a 2 x 2 filter and a stride of 2 will double the input size.
 
 Let's consider an autoencoder with two Max Pooling layers in the encoder, both having a 2 x 2 window and a stride of 2.
-If
-we want the network to output an image with the same size as the input, we need to counteract the two Max Pooling layers
-in the encoder with two Transposed Convolution layers with a 2 x 2 filter and a stride of 2 in the decoder. This will
-give
-us back an output with the same size as the input.
+If we want the network to output an image with the same size as the input, we need to counteract the two Max Pooling
+layers in the encoder with two Transposed Convolution layers with a 2 x 2 filter and a stride of 2 in the decoder. This
+will give us back an output with the same size as the input.
 
 ### Transposed Convolutions in PyTorch
 
-Transposed Convolutions in PyTorch
 You can generate a Transposed Convolution Layer in PyTorch with:
 
 ```
 unpool = nn.ConvTranspose2d(input_ch, output_ch, kernel_size, stride=2)
 ```
 
-See the full documentation on ConvTranspose2d(opens in a new tab) for more details.
-
 For example, we can generate a Transposed Convolution Layer that doubles the size of an input grayscale image and
-generates
-16 feature maps as follows:
+generates 16 feature maps as follows:
 
 ```
 unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
@@ -3319,12 +3267,9 @@ unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
 ### Alternative to a Transposed Convolution
 
 The Transposed Convolutions tend to produce checkerboard artifacts in the output of the networks as detailed in this
-Distill
-article(opens in a new tab). Therefore, nowadays many practitioners replace them with a nearest-neighbor upsampling
-operation
-followed by a convolution operation. The convolution makes the image produced by the nearest-neighbors smoother. For
-example,
-we can replace this Transposed Convolution:
+Distill article(opens in a new tab). Therefore, nowadays many practitioners replace them with a nearest-neighbor
+upsampling operation followed by a convolution operation. The convolution makes the image produced by the
+nearest-neighbors smoother. For example, we can replace this Transposed Convolution:
 
 ```
 unpool = nn.ConvTranspose2d(1, 16, 2, stride=2)
@@ -3374,8 +3319,7 @@ class Autoencoder(nn.Module):
 ```
 
 Of course, this autoencoder is not very performant. Typically you want to compress the information much more with a
-deeper
-encoder, and then uncompress it with a deeper decoder. This is what you are going to do in the next exercise.
+deeper encoder, and then uncompress it with a deeper decoder. This is what you are going to do in the next exercise.
 
 In real-life situations, you can also use an already-existing architecture like a ResNet to extract the features (just
 remember to remove the final linear layers, i.e., the head and only keep the backbone). Of course, your decoder needs to
