@@ -945,64 +945,50 @@ In practice things are a bit more complicated. When we compute the effective rec
 <br>
 <br>
 
-### CNN Architecture Blueprint
+## CNN Architecture Blueprint
 
 <br>
+<img src="images/architecture.png" alt="Customer" width="600" height=auto>
+<br>
 
-![image info](images/architecture.png)
-
+<br>
 <br>
 
 ### Glossary
 
-CNN: Convolutional Neural Networks. A class of Neural Networks featuring local connectivity, weight sharing, and pooling
-operations.
+**Convolutional Neural Network (CNN)**: A class of Neural Networks featuring local connectivity, weight sharing, and pooling operations.
 
-MNIST: A dataset of handwritten digits of historical importance, commonly used nowadays for tutorials and learning.
+**MNIST**: A dataset of handwritten digits of historical importance, commonly used nowadays for tutorials and learning.
 
-Dataloader: Allows sequential or random iterations over a dataset or over a subset of a dataset.
+**Dataloader**: Allows sequential or random iterations over a dataset or over a subset of a dataset.
 
-Local connectivity: In the fully-connected layers present in a Multi-Layer Perceptron the neurons in a layer are
-connected to all neurons in the previous layer. Instead, in CNNs, a neuron is connected only to a small portion of
-contiguous neurons in the previous layer (or pixels in the input image).
+**Local connectivity**: In the fully-connected layers present in a Multi-Layer Perceptron the neurons in a layer are connected to all neurons in the previous layer. Instead, in CNNs, a neuron is connected only to a small portion of contiguous neurons in the previous layer (or pixels in the input image).
 
-Filters / Kernels: Small matrices of numbers, usually normalized to 1, that are applied to the input image during the
-convolution operation.
+**Filters / Kernels**: Small matrices of numbers, usually normalized to 1, that are applied to the input image during the convolution operation.
 
-Convolution: The operation of sliding a kernel on an image or a feature map to produce a modified output.
+**Convolution**: The operation of sliding a kernel on an image or a feature map to produce a modified output.
 
-Feature map: The result of applying a filter on an image or another feature map. One kernel/filter generates one feature
-map.
+**Feature map**: The result of applying a filter on an image or another feature map. One kernel/filter generates one feature map.
 
-Pooling: The operation of sliding a window over the input image or a feature map and applying a function to the numbers
-present in that window (for example, taking the maximum).
+**Pooling**: The operation of sliding a window over the input image or a feature map and applying a function to the numbers present in that window (for example, taking the maximum).
 
-Max Pooling: The operation of sliding a window over the input image or a feature map and applying a maximum function to
-the numbers present in that window.
+**Max Pooling**: The operation of sliding a window over the input image or a feature map and applying a maximum function to the numbers present in that window.
 
-Sobel filters: Specific types of filters that can isolate vertical and horizontal edges.
+**Sobel filters**: Specific types of filters that can isolate vertical and horizontal edges.
 
-Effective receptive field (EFR): Generally, this is the region in the input image that contributes to the values of a
-pixel in a feature map deep in the network. More precisely, the effective receptive field is a matrix superimposed on
-the input image, where each element has a value proportional to the importance that a pixel in the input image has in
-determining the value of the pixel in the feature map deep in the network.
+**Effective receptive field (EFR)**: Generally, this is the region in the input image that contributes to the values of a pixel in a feature map deep in the network. More precisely, the effective receptive field is a matrix superimposed on the input image, where each element has a value proportional to the importance that a pixel in the input image has in determining the value of the pixel in the feature map deep in the network.
 
-Flattening: The operation of taking an image or a feature map and changing it into a vector (or 1d array).
-
-
+**Flattening**: The operation of taking an image or a feature map and changing it into a vector (or 1d array).
 
 <br>
-
-![image info](images/output.png)
-
 <br>
 
+<br>
+<img src="images/output.png" alt="Customer" width="600" height=auto>
+<br>
 
-Lesson Summary
-
-Reviewed how to use MLPs for image classification
-Learned of the limitations that MLPs have when it comes to image classification, and how CNNs overcome those limitations
-Learned the basic concepts of CNNs, and what makes them great at image tasks
+<br>
+<br>
 
 
 
