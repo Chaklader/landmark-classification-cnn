@@ -88,9 +88,7 @@ Customers: Consumer of the product; we should always consider the customers' and
 Computer Interpretation of Images
 
 
-An image is seen by the computer as an array of values (a matrix).
-
-The images in the MNIST dataset are 28 x 28 and 8-bit grayscale. This means that the computer represents each one of them as a square matrix of 28 x 28 elements, where the value in the element of the matrix represents the light intensity with a range of 0 to 255: 0 means pure black and 255 means pure white.
+An image is seen by the computer as an array of values (a matrix). The images in the MNIST dataset are 28 x 28 and 8-bit grayscale. This means that the computer represents each one of them as a square matrix of 28 x 28 elements, where the value in the element of the matrix represents the light intensity with a range of 0 to 255: 0 means pure black and 255 means pure white.
 
 We already know how to perform classification with neural networks, and in particular with a Multi-Layer Perceptron. This network takes as input a grayscale image (a matrix) and outputs a vector of scores or a vector of probabilities (one for each class). The class corresponding to the maximum of that vector corresponds to the best guess for the label of the image.
 
@@ -169,8 +167,7 @@ $\hat{p}_i$ is the predicted probability for class $i$
 
 ### Loss Function: Categorical Cross-Entropy (CCE)
 
-In our MNIST digit classification task, we use the Categorical Cross-Entropy (CCE) loss function. This choice is typical
-for multi-class classification problems where each sample belongs to exactly one class.
+In our MNIST digit classification task, we use the Categorical Cross-Entropy (CCE) loss function. This choice is typical for multi-class classification problems where each sample belongs to exactly one class.
 
 ## Definition
 
@@ -451,8 +448,11 @@ The test loop is identical to the validation loop, but we of course iterate over
 <img src="images/visualize.png" alt="Workflow" width="600" height=auto>
 <br>
 
+<br>
+<br>
 
-Typical Workflow for an image classification task:
+
+### Typical Workflow for an image classification
 
 1. DataLoaders with preprocessing: The process starts with data loaders that include preprocessing steps for the images.
 
@@ -464,16 +464,13 @@ Typical Workflow for an image classification task:
 
 5. Define Optimizer: An optimizer is chosen, usually Adam or SGD (Stochastic Gradient Descent).
 
-6. Train: The model is trained using the defined loss and optimizer. Training continues until the validation loss starts
-   increasing, indicating potential overfitting.
+6. Train: The model is trained using the defined loss and optimizer. Training continues until the validation loss starts increasing, indicating potential overfitting.
 
-7. Experiment: This is an iterative process where the model design and parameters are adjusted based on the training
-   results.
+7. Experiment: This is an iterative process where the model design and parameters are adjusted based on the training results.
 
 8. Select Best Model: After multiple experiments, the best performing model is selected.
 
-9. Evaluate on Test Data: The chosen model is then evaluated on a separate test dataset to assess its generalization
-   performance.
+9. Evaluate on Test Data: The chosen model is then evaluated on a separate test dataset to assess its generalization performance.
 
 This workflow is cyclical, with the "Experiment" step potentially leading back to adjusting the model definition, loss function, or optimizer. The goal is to iterate and improve until a satisfactory model is achieved, which is then finally tested on unseen data.
 
