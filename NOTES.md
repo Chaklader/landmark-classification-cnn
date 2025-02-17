@@ -136,15 +136,26 @@ In many cases, we go further than that: we compute the mean and the standard dev
 <br>
 
 
-## Loss Function
+### A Multi-Layer Perceptron for MNIST
 
-The loss function quantifies how far we are from the ideal state where the network does not make any mistakes and has
-perfect confidence in its answers.
+The input of our MLP must obviously be 28 x 28=784, which corresponds to the dimension of the flattened image. The output of the MLP must also be obviously a vector with 10 elements (one for each class). The values in this vector are proportional to the probability that the network assigns to each class. So if the network thinks that it is most likely that the given image is an 8, then the element in the array corresponding with 8 should be the largest. But what goes between the input and the output? How many hidden layers, and how many neurons?
 
-Depending on the task and other considerations we might pick different loss functions. For image classification the most
-typical loss function is the Categorical Cross-Entropy (CCE) loss, defined as:
 
-Definition
+
+<br>
+<img src="images/tra.png" alt="Customer" width="600" height=auto>
+<br>
+
+<br>
+<img src="images/tra_1.png" alt="Customer" width="600" height=auto>
+<br>
+
+
+
+### Loss Function
+
+The loss function quantifies how far we are from the ideal state where the network does not make any mistakes and has perfect confidence in its answers. Depending on the task and other considerations we might pick different loss functions. For image classification the most typical loss function is the Categorical Cross-Entropy (CCE) loss, defined as:
+
 The CCE loss is defined as:
 $$
 \text{CCE} = -\sum_{i=1}^{n_\text{classes}} y_i \log(\hat{p}_i)
@@ -154,15 +165,14 @@ Where:
 
 $n_\text{classes}$ is the number of classes (10 for MNIST digits)
 <br>
-$y_i$ is the true label (ground truth) as a one-hot encoded vector
+$y_i$ is the true label (ground truth) as a one-hot encoded vector of length 10
 <br>
 $\hat{p}_i$ is the predicted probability for class $i$
 
-where:
+<br>
+<br>
 
-1. The sum is taken over the classes (10 in our case)
-2. yi is the ground truth, i.e., a one-hot encoded vector(opens in a new tab) of length 10
-3. pi is the probability predicted by the network
+
 
 # Loss Function: Categorical Cross-Entropy (CCE)
 
