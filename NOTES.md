@@ -2503,100 +2503,72 @@ of the input image, because the size of the vector after the GAP layer is given 
 last convolutional layer, and it is not influenced by their height and width. Therefore, the input image can have any size
 because this will not influence the number of feature maps, but only their height and width. Note however that a network with GAP trained on a certain image size will not respond well to drastically different image sizes, even though it will output a result. So effectively the input size became a tunable parameter that can be changed without affecting the architecture of the CNN. Many modern architectures adopt the GAP layer.
 
-## Attention
+<br>
+<br>
+
+### Attention
 
 The concept of attention is a very important concept in modern neural networks. It is a simple idea: the network should
 learn to boost some information that is helpful for a given example, and decrease the importance of information that is
-not useful for that example.
-
-There are several forms of attention. Let's look at two important ones.
+not useful for that example. There are several forms of attention. Let's look at two important ones.
 
 #### Channel Attention: Squeeze and Excitation
 
 <br>
-
-![image info](images/squeeze.png)
-
+<img src="images/squeeze.png" width="600" height=auto/>
 <br>
 
 The term "channel" can refer to the channels in the input image (3 channels if RGB) but also to the number of feature
-maps
-are output from a layer.
+maps are output from a layer.
 
 Channel attention is a mechanism that a network can use to learn to pay more attention (i.e., to boost) feature maps
-that
-are useful for a specific example, and pay less attention to the others.
-
-This is accomplished by adding a sub-network that given the feature maps/channels assigns a scale to each input feature
-map.
-The feature maps with the largest scale are boosted:
+that are useful for a specific example, and pay less attention to the others. This is accomplished by adding a sub-network
+that given the feature maps/channels assigns a scale to each input feature map. The feature maps with the largest scale are
+boosted:
 
 <br>
-
-![image info](images/attention.png)
-
+<img src="images/attention.png" width="600" height=auto/>
 <br>
 
-### Brief Introduction to Transformers in Computer Vision
+### Transformers in Computer Vision
 
 Vision Transformers have been recently introduced, and are becoming more and more important for computer vision. They
-contain
-another form of attention, called self attention.
-
-### Brief Notes on Vision Transformers
+contain another form of attention, called self attention.
 
 Transformers are a family of neural networks originally developed for Natural Language Processing (NLP) applications.
-They
-are very good at modeling sequences, such as words in a sentence. They have been extended to deal with images by
-transforming
-images to sequences. In short, the image is divided in patches, the patches are transformed into embedded
-representations,
-and these representations are fed to a Transformer that treats them as a sequence.
+They are very good at modeling sequences, such as words in a sentence. They have been extended to deal with images by
+transforming images to sequences. In short, the image is divided in patches, the patches are transformed into embedded
+representations, and these representations are fed to a Transformer that treats them as a sequence.
 
 Transformers are characterized by the self-attention mechanism. Just like channel attention allows the network to learn
-to
-focus more on some channels, self attention allows the network to learn how to pay attention to the relationship between
-different words in a sentence or parts of an image.
-
-While CNNs build large Effective Receptive Fields by using many layers, vision Transformers show large receptive fields
+to focus more on some channels, self attention allows the network to learn how to pay attention to the relationship between
+different words in a sentence or parts of an image. While CNNs build large Effective Receptive Fields by using many layers, vision Transformers show large receptive fields
 earlier and more consistently throughout the network.
 
 ### State of the Art Computer Vision Models
 
 Vision Transformers have state-of-the-art performances in many academic computer vision tasks. CNNs are, however, still
-by
-far the most widely-used models for real-world computer vision applications.
+by far the most widely-used models for real-world computer vision applications.
 
-Transformers are very powerful but they need a lot more data than CNNs, and they are typically slower and more
-computationally
-expensive. CNNs are more data-efficient because they are built around two baked-in assumptions: local connectivity,
-which
+Transformers are very powerful but they need a lot more data than CNNs, and they are typically slower and more computationally
+expensive. CNNs are more data-efficient because they are built around two baked-in assumptions: local connectivity, which
 dictates that pixels close to each other are related (by using small kernels); and weight sharing, which dictates that
 different portions of an image must be processed identically (by sliding the same convolutional kernel across the entire
-image). Transformers are much more general, and they do not impose these assumptions. Therefore, they are more
-adaptable,
-but need more data to learn these characteristics of many images.
-
-There are also architectures that are hybrids of CNNs and Transformers, which try to create the best combination of
-both,
-aiming to be data-efficient but more powerful than pure CNNs.
+image). Transformers are much more general, and they do not impose these assumptions. Therefore, they are more adaptable,
+but need more data to learn these characteristics of many images. There are also architectures that are hybrids of CNNs and
+Transformers, which try to create the best combination of both, aiming to be data-efficient but more powerful than pure CNNs.
 
 Summarizing, there are currently 3 categories of computer vision models:
 
-Pure CNN architectures - still widely used for the majority of real-world applications. Examples: EfficientNet V2(opens
-in a new tab), ConvNeXt(opens in a new tab) Pure Vision Transformers - currently widely used in academic environments
-and
-in large-scale real-world applications. Examples: ViT(opens in a new tab), Swin V2(opens in a new tab) Hybrid
-architectures
-that mix elements of CNNs with elements of Transformers. Example: CoatNet(opens in a new tab) As a final note,
-Transformers
-are now becoming even more important because they form the basis for multi-modal models - models that deal with, for
-example,
-image and text simultaneously. Examples of these are Open AI's CLIP(opens in a new tab) and Google's ImageGen(opens in a
+1. Pure CNN architectures - still widely used for the majority of real-world applications. Examples: EfficientNet V2
+2. ConvNeXt
+3. Pure Vision Transformers - currently widely used in academic environments and in large-scale real-world applications. Examples: ViT, Swin V2, Hybrid architectures that mix elements of CNNs with elements of Transformers. Example: CoatNet
+
+As a final note, Transformers are now becoming even more important because they form the basis for multi-modal models - models that deal with, for example, image and text simultaneously. Examples of these
+are Open AI's CLIP and Google's ImageGen(opens in a
 new tab).
 
-Question 1 of 3:
-Match the architecture with its main innovation/characteristic.
+### Q#1: Match the architecture with its main innovation/characteristic.
 
 - Vision Transformers, AlexNet, ResNet, EfficientNet, VGG
 
@@ -2619,8 +2591,7 @@ Explanation:
 - EfficientNet utilized squeeze-and-excitation blocks for channel attention, improving efficiency.
 - Vision Transformers brought self-attention mechanisms from NLP to computer vision.
 
-Question 2 of 3:
-What is the role of the skip connection during a forward pass?
+### Q#2: What is the role of the skip connection during a forward pass?
 
 Answer: Makes it possible for a layer to easily learn the identity function, and forces the layer to learn the residuals
 with respect to the input image.
@@ -2631,8 +2602,7 @@ easier for the network to learn the identity mapping when needed, as it only nee
 between the input and desired output. This helps solve the degradation problem in deep networks and allows for better
 gradient flow during training.
 
-Question 3 of 3:
-Match each attention type with its definition.
+### Q#3: Match each attention type with its definition.
 
 Answer:
 
@@ -2647,6 +2617,10 @@ Explanation:
 - Squeeze-and-excitation learns to weight different channels/feature maps based on their importance, effectively
   implementing
   channel-wise attention. This helps the network focus on the most relevant features for the task at hand.
+
+
+<br>
+<br>
 
 ### Transfer Learning
 
