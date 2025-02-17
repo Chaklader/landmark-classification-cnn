@@ -1740,13 +1740,10 @@ self.conv1 = nn.Sequential(
 )
 ```
 
-The only parameter is the number of input feature maps, which of course must be equal to the output channels of the
-convolutional
-layer immediately before it. NOTE: It is important to use BatchNorm before DropOut. The latter drops some connections
-only at
-training time, so placing it before BatchNorm would cause the distribution seen by BatchNorm to be different between
-training
-and inference.
+<br>
+<br>
+
+The only parameter is the number of input feature maps, which of course must be equal to the output channels of the convolutional layer immediately before it. NOTE: It is important to use BatchNorm before DropOut. The latter drops some connections only at training time, so placing it before BatchNorm would cause the distribution seen by BatchNorm to be different between training and inference.
 
 ### BatchNorm for Dense Layers
 
@@ -1764,39 +1761,40 @@ self.mlp = nn.Sequential(
 ### Optimizing the Performance of Our Network
 
 <br>
-
-![image info](images/hp1.png)
-
-<br>
-
-<br>
-
-![image info](images/hp2.png)
-
+<img src="images/hp1.png" alt="hp1.png" width="600" height=auto>
 <br>
 
 
-Important Terms in Optimizing Performance
+<br>
+<img src="images/hp2.png" alt="hp2.png" width="600" height=auto>
+<br>
 
-Parameter
+
+## Important Terms in Optimizing Performance
+
+### Parameter
 
 1. Internal to the model
 2. May vary during training
 3. Examples: Weights and biases of a network
 
-Hyperparameter
+### Hyperparameter
 
 1. External to the model
 2. Fixed during training
 3. Examples: Learning rate, number of layers, activation layers
 
-Experiment
+### Experiment
 
 1. A specific training run with a fixed set of hyperparameters
 2. Practitioners typically perform many experiments varying the hyperparameters. Each experiment produces one or more
    metrics that can be used to select the best-performing set of hyperparameters (see the next section).
 
-### Strategies for Optimizing Hyperparameters
+<br>
+<br>
+
+
+## Strategies for Optimizing Hyperparameters
 
 Grid search
 
