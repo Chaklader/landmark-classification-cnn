@@ -2313,10 +2313,6 @@ transformations can produce rotations, translations, color changes and so on.
 <br>
 <br>
 
-# C-5: Autoencoders
-
-# C-6: Object Detection and Segmentation
-
 <br>
 <br>
 
@@ -2618,7 +2614,6 @@ Explanation:
   implementing
   channel-wise attention. This helps the network focus on the most relevant features for the task at hand.
 
-
 <br>
 <br>
 
@@ -2735,9 +2730,7 @@ How similar your dataset is to the original dataset that the network was trained
 We can schematize the different possibilities like this:
 
 <br>
-
-![image info](images/fine-tune.png)
-
+<img src="images/fine-tune.png" alt="fine-tune.png" width="600" height=auto>
 <br>
 
 Dataset Size
@@ -2974,9 +2967,7 @@ Explanation for each case:
 ### Visualizing CNNs
 
 <br>
-
-![image info](images/viz.png)
-
+<img src="images/viz.png" alt="Customer" width="600" height=auto>
 <br>
 
 #### Course: CS231n Convolutional Neural Networks for Visual Recognition | Stanford University
@@ -3001,7 +2992,13 @@ It allows us to get very good performances much more quickly, and on smaller dat
 
 Frozen parameter: A parameter that is not allowed to vary during training.
 
-# Introduction to Autoencoders
+<br>
+<br>
+
+# C-5: Autoencoders
+
+<br>
+<br>
 
 Autoencoders are a very interesting neural network architecture that can be used for different applications directly (
 anomaly
@@ -3420,9 +3417,7 @@ We call denoising the task of removing noise from an image by reconstructing a d
 This is a task that convolutional autoencoders are well-suited for.
 
 <br>
-
-![image info](images/denoise.png)
-
+<img src="images/denoise.png" alt="Customer" width="600" height=auto>
 <br>
 
 How Do We Train a Denoising Autoencoder?
@@ -3567,7 +3562,13 @@ removed.
 Variational autoencoder (VAE): An extension of the idea of autoencoders that transforms them into proper generative
 models.
 
-# Introduction to Object Detection and Segmentation
+<br>
+<br>
+
+# C-6: Object Detection and Segmentation
+
+<br>
+<br>
 
 In this lesson we will focus on object localization, object detection and semantic segmentation. These topics could
 easily
@@ -3730,9 +3731,7 @@ add
 one more head (the localization head) on top of the existing classification head:
 
 <br>
-
-![image info](images/obj-loc.png)
-
+<img src="images/obj-loc.png" alt="Customer" width="600" height=auto>
 <br>
 
 A Multi-Head Model in PyTorch
@@ -3786,9 +3785,7 @@ between the input and the predicted bounding boxes is made using, for example, t
 losses are then summed to provide the total loss L.
 
 <br>
-
-![image info](images/slide.png)
-
+<img src="images/slide.png" alt="Customer" width="600" height=aut>
 <br>
 
 Since the two losses might be on different scales, we typically add a hyperparameter α to rescale one of the two:
@@ -3915,9 +3912,7 @@ The Feature Pyramid Network(opens in a new tab) is an architecture that extracts
 maps from an image:
 
 <br>
-
-![image info](images/fpn.png)
-
+<img src="images/fpn.png" alt="Customer" width="600" height=auto>
 <br>
 
 A regular CNN backbone of convolution, pooling, and other typical CNN layers is used to extract multiple feature maps
@@ -3935,9 +3930,7 @@ total in
 this diagram). This is how RetinaNet uses the Feature Pyramid Network:
 
 <br>
-
-![image info](images/retina_net.png)
-
+<img src="images/retina_net.png" alt="Customer" width="600" height=auto>
 <br>
 
 RetinaNet conducts object classification and localization by independently employing anchors at each Feature Pyramid
@@ -3952,9 +3945,7 @@ Focal Loss
 The third innovative feature of RetinaNet is the so-called Focal Loss.
 
 <br>
-
-![image info](images/focal_loss.png)
-
+<img src="images/focal_loss.png" alt="Customer" width="600" height=auto>
 <br>
 
 When using a lot of anchors on multiple feature maps, RetinaNet encounters a significant class balance problem: most of
@@ -4305,9 +4296,7 @@ IoU is a fundamental concept useful in many domains, and is a key metric for the
 algorithms.
 
 <br>
-
-![image info](images/bird.png)
-
+<img src="images/bird.png" alt="Customer" width="600" height=auto>
 <br>
 
 ### Mean Average Precision (mAP)
@@ -4357,8 +4346,7 @@ class:
 
 We then take the average of the AR over the different classes, to define the mean Average Recall, or mAR.
 
-Question 1 of 4:
-What are the components of a CNN-based object localization model? (Select all that apply.)
+### Q#1: What are the components of a CNN-based object localization model? (Select all that apply.)
 
 Answer: Three components apply:
 
@@ -4374,8 +4362,7 @@ A CNN-based object localization model consists of three main components:
 3. Localization head: Predicts the bounding box coordinates
    The self-attention head is not a standard component of object localization models.
 
-Question 2 of 4:
-Match the two types of object detection algorithms with their definition.
+### Q#2: Match the two types of object detection algorithms with their definition.
 
 Answer:
 
@@ -4393,8 +4380,7 @@ These represent two main approaches to object detection:
 - One-stage detectors (like YOLO) process the entire image in a single pass
 - Two-stage detectors (like R-CNN) first propose regions of interest, then classify and refine them
 
-Question 3 of 4:
-What are the main components of RetinaNet?
+### Q#3: What are the main components of RetinaNet?
 
 Answer:
 
@@ -4412,8 +4398,7 @@ RetinaNet combines these components to achieve effective object detection:
 4. Localization head for bounding box prediction
 5. Multiple anchors at different scales for better detection
 
-Question 4 of 4:
-Match each concept with its proper description.
+### Q#4: Match each concept with its proper description.
 
 # Evaluation Metrics in Object Detection
 
@@ -4476,24 +4461,18 @@ However, the UNet adds skip connections between the feature maps at the same lev
 shown below:
 
 <br>
-
-![image info](images/unet.png)
-
+<img src="images/unet.png" alt="Customer" width="600" height=auto>
 <br>
 
 In the decoder, the feature map coming from the decoder path is concatenated along the channel dimension with the
-feature
-map coming from the encoder path. This means that the next transposed convolution layer has access to information with
+feature map coming from the encoder path. This means that the next transposed convolution layer has access to information with
 high semantic content coming from the previous decoder layer, along with information with high detail coming from the
-encoder path. The final segmentation mask is then a lot more detailed than what you would obtain with a simple
-encoder-decoder
-architecture without skip connections between the encoder and the decoder.
+encoder path. The final segmentation mask is then a lot more detailed than what you would obtain with a simple encoder-decoder architecture without skip connections between the encoder and the decoder.
 
-# The Dice Loss
+### The Dice Loss
 
 There are a few different losses that one can use for semantic segmentation. One loss that tend to work well in practice
-is
-called Dice loss, named after Lee Raymond Dice, who published it in 1945. Here is how Dice loss is calculated:
+is called Dice loss, named after Lee Raymond Dice, who published it in 1945. Here is how Dice loss is calculated:
 
 $\text{Dice loss} = 1 - \frac{2\sum_{i=1}^{n_{\text{pix}}} p_iy_i}{\sum_{i=1}^{n_{\text{pix}}}(p_i + y_i)}$
 
@@ -4505,8 +4484,7 @@ Where:
 - $\sum_{i=1}^{n_{\text{pix}}}$ indicates summation over all pixels
 
 The Dice loss derives from the F1 score, which is the geometric mean of precision and recall. Consequently, the Dice
-loss
-tends to balance precision and recall at the pixel level.
+loss tends to balance precision and recall at the pixel level.
 
 Key Points:
 
@@ -4548,7 +4526,10 @@ The Dice loss is simply:
 loss = smp.losses.DiceLoss(smp.losses.BINARY_MODE, from_logits=True)
 ```
 
-# Derivation of the Dice Loss (optional, for those who are interested)
+<br>
+<br>
+
+### Derivation of the Dice Loss
 
 We start from the formula of the F1 score:
 
@@ -4629,8 +4610,10 @@ Key points:
 This loss function provides a continuous, differentiable measure that can effectively train segmentation models while
 balancing precision and recall.
 
-Question 1 of 5:
-Computer vision tasks and their descriptions:
+<br>
+<br>
+
+### Q#1: Computer vision tasks and their descriptions:
 
 Answer:
 
@@ -4648,8 +4631,7 @@ vision tasks beyond image classification
 
 Would you like me to do the same format for the other answers as well?
 
-Question 2 of 5:
-Ground truth inputs needed for different tasks:
+### Q#2: Ground truth inputs needed for different tasks:
 
 Answer:
 
@@ -4659,8 +4641,7 @@ Answer:
 - Binary semantic segmentation: Semantic mask with foreground and background
 - Multi-class semantic segmentation: Semantic masks for all classes (including background)
 
-Question 3 of 5:
-Outputs provided by models for different tasks:
+### Q#3: Outputs provided by models for different tasks:
 
 Answer:
 
@@ -4672,8 +4653,7 @@ Answer:
 - Multi-class semantic segmentation: Mask with k channels, where value p_k in channel k is the class score for the pixel
   for class k
 
-Question 4 of 5:
-Characteristics of a UNet architecture:
+### Q#4: Characteristics of a UNet architecture:
 
 Answer:
 All options apply:
@@ -4681,8 +4661,7 @@ All options apply:
 - An encoder-decoder structure
 - Lateral skip connections, connecting feature maps in the downsampling path to feature maps in the upsampling path
 
-Question 5 of 5:
-Main characteristics of the Dice Loss:
+### Q#5: Main characteristics of the Dice Loss:
 
 Answer:
 Three characteristics apply:
@@ -4698,6 +4677,9 @@ The explanation for each choice:
 - Perfect performance gives 0 loss: This is true by design of the loss function
 - Not a general image classification loss: It's specifically designed for segmentation tasks
 - Not derived from accuracy: It's derived from F1 score instead
+
+<br>
+<br>
 
 ### Glossary
 
