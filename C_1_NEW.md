@@ -6,13 +6,46 @@
 
 
 
-#### CNN Concepts and Architecture
+1. Introduction to Convolutional Neural Networks
+   - CNN Concepts and Architecture
+   - Kernel Convolution
+   - Weight Sharing and Feature Extraction
+2. Comparative Neural Network Architectures
+   - Multi-Layer Perceptrons (MLPs) vs Convolutional Neural Networks
+   - Structural Differences and Design Principles
+3. Advanced CNN Concepts
+   - Receptive Fields
+   - Pooling Techniques
+   - Edge Handling and Image Processing
+4. Neural Network Training Process
+   - Loss Functions
+   - Optimizers
+   - Training and Validation Loops
+   - CNN-Specific Training Considerations
+5. Feature Learning and Hierarchical Representation
+   - Layer-by-Layer Feature Extraction
+   - From Simple to Complex Feature Detection
+6. Practical Implementation and Best Practices
+   - Model Design Guidelines
+   - Regularization Techniques
+   - Performance Monitoring and Improvement
+
+
+
+#### Introduction to Convolutional Neural Networks
+
+##### CNN Concepts and Architecture
 
 Convolutional Neural Networks (CNNs) represent one of the most transformative innovations in artificial intelligence. Unlike traditional neural networks, CNNs are specifically designed to process data with grid-like topology, such as images. To understand why they're revolutionary, let's explore their core principles.
 
 At their heart, CNNs are neural networks that use a mathematical operation called **convolution** instead of general matrix multiplication in at least one of their layers. This seemingly simple change unleashes remarkable capabilities for processing visual information.
 
 Imagine looking at a photograph. When you recognize a face, you're not analyzing the entire image at once—your visual system focuses on specific features (eyes, nose, mouth) and their spatial relationships. CNNs work similarly, examining small regions of an image at a time and gradually building up an understanding of the whole.
+
+<p align="center">
+<img src="images/architecture.png" alt="Customer" width="600" height=auto>
+</p>
+<p align="center">figure:  CNN Architecture Blueprint</p>
 
 #### The Biological Inspiration
 
@@ -45,6 +78,11 @@ graph LR
 
 What makes CNNs truly remarkable is their ability to automatically learn relevant features from data. The early layers typically detect simple features like edges and color gradients, while deeper layers combine these into increasingly complex patterns—eventually recognizing entire objects.
 
+<p align="center">
+<img src="images/cnn_o.png" alt="CNN Overview" width="600" height=auto>
+</p>
+<p align="center">figure: Overview of a Convolutional Neural Network applications</p>
+
 #### Weight Sharing: The Efficiency Breakthrough
 
 One of the most important innovations in CNNs is **weight sharing**. In a traditional neural network, each connection between neurons has its own weight parameter. In contrast, CNNs use the same weights for multiple connections, dramatically reducing the number of parameters.
@@ -57,6 +95,11 @@ Through weight sharing, CNNs achieve two critical advantages:
 - Translation invariance (recognizing objects regardless of where they appear in the image)
 
 The power of CNNs comes from this elegant combination of biologically-inspired architecture, hierarchical feature learning, and parameter efficiency through weight sharing. This design has made CNNs the backbone of modern computer vision systems, enabling everything from facial recognition to autonomous driving.
+
+<p align="center">
+<img src="images/pre.png" alt="Customer" width="450" height=auto>
+</p>
+<p align="center">figure: Pre-process the data</p>
 
 ### Kernel Convolution
 
@@ -251,7 +294,7 @@ This automatic feature learning stands in stark contrast to traditional computer
 
 Weight sharing and the resulting feature extraction process give CNNs their extraordinary capabilities in visual understanding tasks. By dramatically reducing parameters while preserving the ability to detect position-invariant features, CNNs achieve both computational efficiency and remarkable accuracy—a combination that has revolutionized computer vision and many other fields.
 
-## 2. Comparative Neural Network Architectures
+## Comparative Neural Network Architectures
 
 ### Multi-Layer Perceptrons (MLPs) vs Convolutional Neural Networks
 
@@ -289,6 +332,11 @@ This flattening process creates several fundamental problems:
 4. **Overfitting tendency**: The massive number of parameters makes MLPs prone to memorizing training examples rather than generalizing.
 
 Despite these limitations, MLPs can learn to classify images with reasonable accuracy given enough data and careful regularization. However, they're fundamentally inefficient for the task, requiring far more parameters and training examples than necessary.
+
+<p align="center">
+<img src="images/flat.png" alt="Flattening Process" width="600" height=auto>
+</p>
+<p align="center">figure: flattening of the matrix</p>
 
 #### The CNN Revolution: A Specialized Architecture for Visual Data
 
@@ -502,6 +550,11 @@ Pooling operates by dividing feature maps into non-overlapping regions and compu
 
 The pooling operation slides a window (typically 2×2) across feature maps, usually with a stride equal to the window size to ensure non-overlapping regions. For each window position, it computes a single value according to the pooling type.
 
+<p align="center">
+<img src="images/effective.png" alt="Receptive Field" width="350" height=auto>
+</p>
+<p align="center">figure: Pooling operation in a neural network, summarizing feature maps</p>
+
 #### Max Pooling: Preserving Strong Activations
 
 Max pooling, the most commonly used pooling technique, selects the maximum value from each window:
@@ -519,6 +572,11 @@ Max pooling effectively asks: "Was this feature detected strongly anywhere in th
 3. Emphasizes the presence rather than the exact location of features
 
 This approach works particularly well for features like edges and distinctive textures where the maximum response indicates the presence of that feature.
+
+<p align="center">
+<img src="images/output.png" alt="Customer" width="500" height=auto>
+</p>
+<p align="center">figure: Pooling operation in a neural network, summarizing feature maps</p>
 
 #### Average Pooling: Capturing Overall Patterns
 
@@ -720,6 +778,26 @@ Understanding edge handling techniques is essential for designing effective CNN 
 
 By combining appropriate padding strategies with an understanding of receptive fields and pooling operations, CNN architects can control how spatial information flows through the network, balancing the tradeoffs between feature detection accuracy, computational efficiency, and spatial precision.
 
+###### MLP for MNIST Dataset
+
+The input of our MLP must obviously be 28 x 28=784, which corresponds to the dimension of the flattened image. The
+output of the MLP must also be obviously a vector with 10 elements (e.g. 0 to 9). The values in this vector are
+proportional to the probability that the network assigns to each class. So if the network thinks that it is most likely
+that the given image is an 8, then the element in the array corresponding with 8 should be the largest. But what goes
+between the input and the output, how many hidden layers, and how many neurons.
+
+<p align="center">
+<img src="images/tra.png" alt="MLP Architecture" width="600" height=auto>
+</p>
+<p align="center">figure:  A Multi-Layer Perceptron for MNIST</p>
+
+
+
+<p align="center">
+<img src="images/tra_1.png" alt="Training Process" width="600" height=auto>
+</p>
+<p align="center">figure: Visualization of the neural network training process and data flow</p>
+
 ## 4. Neural Network Training Process
 
 ### Loss Functions
@@ -735,6 +813,11 @@ When we train a neural network, we're essentially asking: "How wrong are our cur
 3. It encodes our definition of "good performance" for the specific task
 
 Different tasks require different loss functions because the nature of "being wrong" varies across problems. Let's explore the most common loss functions for CNNs and understand when to use each one.
+
+<p align="center">
+<img src="images/train.png" alt="Training and Validation Loss" width="600" height=auto>
+</p>
+<p align="center">figure: Validation of a Convolutional Neural Network </p>
 
 #### Cross-Entropy Loss: The Classification Workhorse
 
@@ -1214,6 +1297,11 @@ When using Batch Normalization in CNNs:
 
 Batch Normalization has become almost standard in CNN architectures, and its proper use can significantly smooth the training process.
 
+<p align="center">
+<img src="images/visualize.png" alt="Workflow" width="600" height=auto>
+</p>
+<p align="center">figure:  Training a Neural Network</p>
+
 #### Weight Initialization Strategies
 
 Proper weight initialization is crucial for CNNs, especially for deeper architectures:
@@ -1630,6 +1718,13 @@ The transformation from simple to complex features occurs through specific mecha
 3. **Non-linear transformations**: Activation functions like ReLU introduce non-linearity, enabling the network to learn more than just linear combinations of features. This non-linearity is essential for representing complex patterns.
 4. **Expanding receptive fields**: As information flows through the network, the receptive field of each neuron grows, allowing it to detect patterns that span larger portions of the input image.
 
+
+
+<p align="center">
+<img src="images/ReLU.png" alt="ReLU Activation Function" width="600" height=auto>
+</p>
+<p align="center">figure:  ReLU Activation Function</p>
+
 Let's examine how these mechanisms work together to build increasingly complex representations by tracing the detection of a specific feature—say, a human eye—through a CNN:
 
 1. In early layers, simple edge detectors identify the contours of the eye, eyelids, and surrounding structures
@@ -1638,6 +1733,11 @@ Let's examine how these mechanisms work together to build increasingly complex r
 4. The deepest layers place this eye in context with other facial features to recognize a face
 
 This progression from edges to complete objects emerges through the combined effect of the network's architecture and the patterns in the training data.
+
+<p align="center">
+<img src="images/act.png" alt="Activation Functions" width="600" height=auto>
+</p>
+<p align="center">figure:  Normalizing Image Inputs</p>
 
 #### Visualizing the Feature Hierarchy
 
