@@ -176,7 +176,6 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
 
         """
         This condition checks if the model's performance has improved in 3 ways:
-
             - First epoch (valid_loss_min is None)
             - Validation loss decreased by >1% ((valid_loss_min - valid_loss)/valid_loss_min > 0.01)
             - New accuracy record (accuracy > best_accuracy)
