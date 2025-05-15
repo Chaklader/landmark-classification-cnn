@@ -126,6 +126,16 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
     best_accuracy = 0.0
     logs = {}
 
+    """
+    This is a learning rate scheduler that automatically reduces the learning rate when the validation loss 
+    stops improving. Here's what each parameter does:
+
+        - optimizer: The optimizer whose learning rate will be adjusted (e.g., Adam/SGD)
+        - mode='min': Monitors validation loss (will reduce LR when loss stops decreasing)
+        - factor=0.1: New LR = old LR × 0.1 (a 10x reduction when triggered)
+        - patience=10: Waits 10 epochs without improvement before reducing LR
+        - verbose=True: Prints messages when LR changes
+    """
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode='min',
