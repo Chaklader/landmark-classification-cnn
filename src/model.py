@@ -15,28 +15,28 @@ class MyModel(nn.Module):
         # Feature extractor
         self.features = nn.Sequential(
             # First conv block
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(num_features=64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout(p=dropout / 2),  # Less dropout in early layers
 
             # Second conv block
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout(p=dropout / 2),
 
             # Third conv block
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Dropout(p=dropout / 2),
 
             # Fourth conv block
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, padding=1),
             nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
