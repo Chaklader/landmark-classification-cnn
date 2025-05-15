@@ -157,6 +157,7 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
         correct = 0
         total = 0
         model.eval()
+
         with torch.no_grad():
             for data, target in data_loaders["valid"]:
                 data, target = data.to(device), target.to(device)
@@ -173,6 +174,15 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
         print(f"[Epoch {epoch}/{n_epochs}] Validation Accuracy: {accuracy:.2f}%")
         print("-" * 80)
 
+        """
+        This condition checks if the model's performance has improved in 3 ways:
+
+            - First epoch (valid_loss_min is None)
+            - Validation loss decreased by >1% ((valid_loss_min - valid_loss)/valid_loss_min > 0.01)
+            - New accuracy record (accuracy > best_accuracy)
+
+        It triggers model checkpointing when any condition is met.
+        """
         if (valid_loss_min is None or
                 ((valid_loss_min - valid_loss) / valid_loss_min > 0.01) or
                 accuracy > best_accuracy):
