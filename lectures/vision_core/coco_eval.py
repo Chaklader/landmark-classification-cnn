@@ -17,6 +17,10 @@ from . import utils
 
 
 class CocoEvaluator(object):
+    """
+        COCO refers to the Common Objects in Context dataset, a large-scale object detection, 
+        segmentation, and captioning dataset.
+    """
     def __init__(self, coco_gt, iou_types):
         assert isinstance(iou_types, (list, tuple))
         coco_gt = copy.deepcopy(coco_gt)
