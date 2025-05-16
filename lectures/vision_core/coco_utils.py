@@ -13,6 +13,10 @@ from . import transforms as T
 
 
 class FilterAndRemapCocoCategories(object):
+    """
+        COCO refers to the Common Objects in Context dataset, a large-scale object detection, 
+        segmentation, and captioning dataset.
+    """
     def __init__(self, categories, remap=True):
         self.categories = categories
         self.remap = remap
