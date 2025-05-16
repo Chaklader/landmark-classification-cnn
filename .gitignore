@@ -1,4 +1,4 @@
-lectures/recognized_flowers/flowers
+lectures/recognized_flowers/flowers/
 __pycache__/
 *.py[cod]
 *$py.class
