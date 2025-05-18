@@ -3,10 +3,50 @@ import numpy as np
 from torch.optim.lr_scheduler import LambdaLR
 from tqdm import tqdm
 import torch.optim as optim
-import copy
 
 
 def lr_finder(min_lr, max_lr, n_steps, loss, model, data_loaders):
+    """
+    Implements the learning rate range test to find optimal learning rates.
+    
+    This function performs a training run while increasing the learning rate
+    exponentially from min_lr to max_lr over n_steps batches. It tracks the loss
+    at each learning rate to help identify a good learning rate range.
+    
+    Args:
+        min_lr (float): Starting learning rate
+        max_lr (float): Maximum learning rate to test
+        n_steps (int): Number of batches to run the test for
+        loss: Loss function to use
+        model: PyTorch model to train
+        data_loaders: Dictionary containing 'train' DataLoader
+    
+    Returns:
+        dict: Dictionary mapping learning rates to corresponding loss values
+    
+    How it works:
+        1. Saves initial model weights
+        2. Creates an optimizer with min_lr
+        3. For each batch:
+           - Performs forward/backward pass
+           - Updates model weights
+           - Exponentially increases learning rate
+           - Tracks loss at each learning rate
+        4. Restores original model weights
+        5. Returns loss vs learning rate data
+    
+    Typical usage:
+        # Find good learning rate range
+        losses = lr_finder(1e-6, 1, 100, criterion, model, data_loaders)
+        # Plot losses vs learning rates
+        plt.plot(list(losses.keys()), list(losses.values()))
+        plt.xscale('log')
+    
+    Note:
+        - Stops early if loss becomes 10x the minimum loss seen
+        - Restores original model weights before returning
+        - Uses SGD optimizer (can be modified if needed)
+    """
     
     # Save initial weights so we can restore them at the end
     torch.save(model.state_dict(), "__weights_backup")
