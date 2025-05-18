@@ -11,6 +11,18 @@ from tqdm import tqdm
 
 
 def get_train_val_data_loaders(batch_size, valid_size, transforms, num_workers):
+    """
+    Splits the CIFAR10 training dataset into training and validation sets.
+    
+    Args:
+        batch_size (int): Batch size for data loaders
+        valid_size (float): Fraction of data to reserve for validation
+        transforms: Image transformations to apply
+        num_workers (int): Number of subprocesses to use for data loading
+    
+    Returns:
+        tuple: (train_loader, valid_loader)
+    """
 
     # Get the CIFAR10 training dataset from torchvision.datasets and set the transforms
     # We will split this further into train and validation in this function
@@ -40,6 +52,17 @@ def get_train_val_data_loaders(batch_size, valid_size, transforms, num_workers):
 
 
 def get_test_data_loader(batch_size, transforms, num_workers):
+    """
+    Creates a DataLoader for the CIFAR10 test dataset.
+    
+    Args:
+        batch_size (int): Batch size for the DataLoader
+        transforms: Image transformations to apply
+        num_workers (int): Number of subprocesses to use for data loading
+    
+    Returns:
+        DataLoader: Test DataLoader
+    """
     # We use the entire test dataset in the test dataloader
     test_data = datasets.CIFAR10("data", train=False, download=True, transform=transforms)
     test_loader = torch.utils.data.DataLoader(
@@ -52,6 +75,15 @@ def get_test_data_loader(batch_size, transforms, num_workers):
 def train_one_epoch(train_dataloader, model, optimizer, loss):
     """
     Performs one epoch of training
+    
+    Args:
+        train_dataloader (DataLoader): DataLoader for training data
+        model: PyTorch model to train
+        optimizer: Optimizer to use for training
+        loss: Loss function to use
+    
+    Returns:
+        float: Average training loss for the epoch
     """
 
     # Move model to GPU if available
@@ -99,7 +131,15 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
 def valid_one_epoch(valid_dataloader, model, loss):
     """
     Validate at the end of one epoch
-    """
+    
+    Args:
+        valid_dataloader (DataLoader): DataLoader for validation data
+        model: PyTorch model to validate
+        loss: Loss function to use
+    
+    Returns:
+        float: Average validation loss for the epoch
+        """
 
     # During validation we don't need to accumulate gradients
     with torch.no_grad():
@@ -140,6 +180,21 @@ def valid_one_epoch(valid_dataloader, model, loss):
 
 
 def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
+    """
+    Trains the model for a specified number of epochs and saves the best model.
+    
+    Args:
+        data_loaders (dict): Dictionary containing 'train' and 'valid' DataLoaders
+        model: PyTorch model to train
+        optimizer: Optimizer to use for training
+        loss: Loss function to use
+        n_epochs (int): Number of epochs to train for
+        save_path (str): Path to save the best model weights
+        interactive_tracking (bool): Whether to use interactive tracking
+    
+    Returns:
+        None
+    """
     # initialize tracker for minimum validation loss
     if interactive_tracking:
         liveloss = PlotLosses()
@@ -186,6 +241,17 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
 
             
 def one_epoch_test(test_dataloader, model, loss):
+    """
+    Performs one epoch of testing
+    
+    Args:
+        test_dataloader (DataLoader): DataLoader for test data
+        model: PyTorch model to test
+        loss: Loss function to use
+    
+    Returns:
+        tuple: (test_loss, preds, actuals)
+    """
     # monitor test loss and accuracy
     test_loss = 0.
     correct = 0.
@@ -253,7 +319,7 @@ def plot_confusion_matrix(pred, truth, classes):
     confusion_matrix.index = classes
     confusion_matrix.columns = classes
     
-    fig, sub = plt.subplots()
+    _, sub = plt.subplots()
     with sns.plotting_context("notebook"):
 
         ax = sns.heatmap(
