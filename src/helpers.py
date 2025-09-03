@@ -121,7 +121,7 @@ def compute_mean_and_std():
     cache_file = "mean_and_std.pt"
     if os.path.exists(cache_file):
         print(f"Reusing cached mean and std")
-        d = torch.load(cache_file)
+        d = torch.load(cache_file, weights_only=True)
 
         return d["mean"], d["std"]
 

@@ -6,8 +6,16 @@ import torch.optim
 
 def get_loss():
     """
-    Get an instance of the CrossEntropyLoss (useful for classification),
-    optionally moving it to the GPU if use_cuda is set to True
+    Creates and returns a loss function suitable for multi-class classification.
+
+    This function returns an instance of `nn.CrossEntropyLoss`. This loss function
+    is standard for classification tasks because it combines a LogSoftmax layer and a
+    Negative Log-Likelihood Loss (NLLLoss) in one efficient class. It measures the
+    difference between the model's predicted probability distribution and the actual
+    class distribution, penalizing incorrect predictions.
+
+    Returns:
+        nn.CrossEntropyLoss: An instance of the cross-entropy loss function.
     """
 
     # loss appropriate for classification
@@ -24,13 +32,28 @@ def get_optimizer(
         weight_decay: float = 0,
 ):
     """
-    Returns an optimizer instance
+    Creates and returns a PyTorch optimizer for training the model.
 
-    :param model: the model to optimize
-    :param optimizer: one of 'SGD' or 'Adam'
-    :param learning_rate: the learning rate
-    :param momentum: the momentum (if the optimizer uses it)
-    :param weight_decay: regularization coefficient
+    This function acts as a factory for creating an optimizer instance based on the
+    provided specifications. It supports two common optimizers:
+    - 'SGD' (Stochastic Gradient Descent): A foundational optimizer that updates model
+      weights based on the gradient of the loss. It can include momentum to
+      accelerate convergence and weight decay for L2 regularization.
+    - 'Adam' (Adaptive Moment Estimation): A more advanced optimizer that adapts the
+      learning rate for each parameter individually, often leading to faster convergence.
+
+    Args:
+        model (nn.Module): The neural network model whose parameters will be optimized.
+        optimizer (str): The name of the optimizer to use ('SGD' or 'Adam').
+        learning_rate (float): The step size for updating the model's weights.
+        momentum (float): The momentum factor for the SGD optimizer.
+        weight_decay (float): The coefficient for L2 regularization (weight decay).
+
+    Returns:
+        torch.optim.Optimizer: An instance of the specified optimizer.
+
+    Raises:
+        ValueError: If the specified optimizer name is not supported.
     """
     if optimizer.lower() == "sgd":
         # create an instance of the SGD
