@@ -11,6 +11,23 @@ from .helpers import get_data_location
 
 
 class Predictor(nn.Module):
+    """A wrapper class for model inference with built-in preprocessing.
+    
+    This class wraps a trained model and provides preprocessing transforms
+    that are compatible with TorchScript. It applies the necessary image
+    transformations and returns softmax probabilities for predictions.
+    
+    Parameters
+    ----------
+    model : torch.nn.Module
+        The trained model to wrap for inference.
+    class_names : list of str
+        List of class names corresponding to model outputs.
+    mean : torch.Tensor
+        Per-channel mean values for normalization.
+    std : torch.Tensor
+        Per-channel standard deviation values for normalization.
+    """
 
     def __init__(self, model, class_names, mean, std):
         super().__init__()
@@ -28,6 +45,21 @@ class Predictor(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the predictor.
+        
+        Applies preprocessing transforms, runs inference through the model,
+        and returns softmax probabilities.
+        
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input image tensor of shape (batch_size, channels, height, width).
+            
+        Returns
+        -------
+        torch.Tensor
+            Softmax probabilities of shape (batch_size, num_classes).
+        """
         with torch.no_grad():
             # 1. apply transforms
             x = self.transforms(x)
@@ -42,9 +74,24 @@ class Predictor(nn.Module):
             return x
 
 def predictor_test(test_dataloader, model_reloaded):
-    """
-    Test the predictor. Since the predictor does not operate on the same tensors
-    as the non-wrapped model, we need a specific test function (can't use one_epoch_test)
+    """Tests the predictor model on the test dataset.
+    
+    This function evaluates the predictor's performance by loading test images
+    directly from the filesystem and comparing predictions with ground truth labels.
+    Since the predictor operates on raw images rather than preprocessed tensors,
+    it requires a specialized test function.
+    
+    Parameters
+    ----------
+    test_dataloader : torch.utils.data.DataLoader
+        DataLoader for the test dataset (used only for dataset size reference).
+    model_reloaded : Predictor
+        The predictor model to test.
+        
+    Returns
+    -------
+    tuple of numpy.ndarray
+        A tuple containing (ground_truth_labels, predicted_labels).
     """
 
     folder = get_data_location()
