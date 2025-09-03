@@ -157,7 +157,21 @@ def compute_mean_and_std():
 
 
 def after_subplot(ax: plt.Axes, group_name: str, x_label: str):
-    """Add title xlabel and legend to single chart"""
+    """Customizes a subplot with title, xlabel, and legend.
+    
+    This function is used as a callback for livelossplot to format individual
+    subplots during training visualization. It adds appropriate titles, labels,
+    and legends, with special handling for loss plots.
+    
+    Parameters
+    ----------
+    ax : matplotlib.pyplot.Axes
+        The axes object to customize.
+    group_name : str
+        The name of the metric group (e.g., 'loss', 'accuracy').
+    x_label : str
+        The label for the x-axis.
+    """
     ax.set_title(group_name)
     ax.set_xlabel(x_label)
     ax.legend(loc="center right")
@@ -167,6 +181,24 @@ def after_subplot(ax: plt.Axes, group_name: str, x_label: str):
 
 
 def plot_confusion_matrix(pred, truth):
+    """Plots a confusion matrix heatmap for classification results.
+    
+    Creates a visual representation of the confusion matrix using seaborn's
+    heatmap. Zero values are displayed as NaN (blank) for better readability.
+    The plot shows predicted vs ground truth labels.
+    
+    Parameters
+    ----------
+    pred : array-like
+        Predicted class labels.
+    truth : array-like
+        Ground truth class labels.
+        
+    Returns
+    -------
+    None
+        Displays the confusion matrix plot.
+    """
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
