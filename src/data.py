@@ -11,16 +11,24 @@ from .helpers import compute_mean_and_std, get_data_location
 
 def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2, num_workers: int = -1, limit: int = -1):
     """
-    Create and returns the train_one_epoch, validation and test data loaders.
+    Orchestrates the creation of training, validation, and test data loaders.
 
-    :param batch_size: size of the mini-batches
-    :param valid_size: fraction of the dataset to use for validation. For example 0.2
-                       means that 20% of the dataset will be used for validation
-    :param num_workers: number of workers to use in the data loaders. Use -1 to mean
-                        "use all my cores"
-    :param limit: maximum number of data points to consider
-    :return a dictionary with 3 keys: 'train', 'valid' and 'test' containing the
-            train, validation and test data loaders
+    This function sets up the entire data loading and preprocessing pipeline. It defines
+    distinct data augmentation and normalization transformations for the training set (to
+    improve model generalization) and the validation/test sets (for consistent
+    evaluation). It loads images from disk, splits the training data into training and
+    validation subsets, and wraps them in `DataLoader` objects for efficient batching
+    and parallel loading.
+
+    Args:
+        batch_size (int): The number of samples per batch.
+        valid_size (float): The fraction of the training data to reserve for validation.
+        num_workers (int): The number of subprocesses to use for data loading. -1 means
+                         using all available CPUs.
+        limit (int): The maximum number of data points to use. Useful for debugging.
+
+    Returns:
+        dict: A dictionary containing 'train', 'valid', and 'test' `DataLoader` objects.
     """
 
     if num_workers == -1:
@@ -36,6 +44,17 @@ def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2, num_workers:
     mean, std = compute_mean_and_std()
     print(f"Dataset mean: {mean}, std: {std}")
 
+    """
+    The following dictionary defines the transformations for the training, validation,
+    and testing datasets.
+
+    - The 'train' transform includes data augmentation (RandomResizedCrop,
+      RandomHorizontalFlip, RandomRotation, ColorJitter) to help the model generalize
+      and prevent overfitting.
+    - The 'valid' and 'test' transforms are identical and use a deterministic
+      CenterCrop. This ensures that we get a consistent, comparable evaluation of
+      the model's performance on unseen data.
+    """
     data_transforms = {
         "train": transforms.Compose([
             transforms.Resize(256),
@@ -128,11 +147,17 @@ def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2, num_workers:
 
 def visualize_one_batch(data_loaders, max_n: int = 5):
     """
-    Visualize one batch of data.
+    Fetches and displays a single batch of images from the training data loader.
 
-    :param data_loaders: dictionary containing data loaders
-    :param max_n: maximum number of images to show
-    :return: None
+    This utility function is useful for visually inspecting the data augmentation
+    and preprocessing pipeline. It takes a batch of images, reverses the normalization
+    transformation to make them viewable, and plots them along with their
+    corresponding class labels.
+
+    Args:
+        data_loaders (dict): A dictionary of `DataLoader` objects, expected to have
+                           at least a 'train' key.
+        max_n (int): The maximum number of images to display from the batch.
     """
 
     # obtain one batch of training images

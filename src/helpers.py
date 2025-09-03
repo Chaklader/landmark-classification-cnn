@@ -100,7 +100,22 @@ def download_and_extract(
 # Compute image normalization
 def compute_mean_and_std():
     """
-    Compute per-channel mean and std of the dataset (to be used in transforms.Normalize())
+    Calculates and caches the per-channel mean and standard deviation of the dataset.
+
+    This function performs a two-pass calculation over the entire dataset to compute
+    the mean and standard deviation for each color channel (R, G, B). These values
+    are essential for the `transforms.Normalize` step in the data preprocessing
+    pipeline, which standardizes the input data to improve model training stability
+    and performance.
+
+    To avoid costly re-computation, the results are cached to a file named
+    'mean_and_std.pt'. On subsequent calls, the function will load the values
+    directly from this cache file if it exists.
+
+    Returns:
+        tuple[torch.Tensor, torch.Tensor]: A tuple containing two tensors:
+            - The per-channel mean of the dataset.
+            - The per-channel standard deviation of the dataset.
     """
 
     cache_file = "mean_and_std.pt"
