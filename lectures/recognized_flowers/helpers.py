@@ -1,3 +1,14 @@
+"""Helpers module for flower recognition deep learning project.
+
+This module provides utility functions for data loading, preprocessing, training,
+validation, and testing of deep learning models for flower image classification.
+It includes functions for computing dataset statistics, creating data loaders with
+augmentation, training loops, and evaluation metrics.
+
+Author: Udacity Deep Learning Nanodegree
+Project: Landmark Classification CNN
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,8 +34,22 @@ torch.cuda.manual_seed_all(seed)
 
 
 def get_data_location():
-    """
-    Find the location of the dataset, either locally or in the Udacity workspace
+    """Find the location of the dataset, either locally or in the Udacity workspace.
+    
+    This function searches for the flowers dataset in common locations and returns
+    the path to the dataset folder. It checks for the dataset in the current directory
+    first, then in the lectures subdirectory structure.
+    
+    Returns:
+        str: Path to the dataset folder containing the flower images.
+        
+    Raises:
+        IOError: If the dataset folder is not found in any of the expected locations.
+        
+    Example:
+        >>> data_path = get_data_location()
+        >>> print(f"Dataset found at: {data_path}")
+        Dataset found at: flowers
     """
 
     if os.path.exists("flowers"):
@@ -39,8 +64,30 @@ def get_data_location():
 
 # Compute image normalization
 def compute_mean_and_std():
-    """
-    Compute per-channel mean and std of the dataset (to be used in transforms.Normalize())
+    """Compute per-channel mean and standard deviation of the dataset.
+    
+    This function calculates the mean and standard deviation for each color channel
+    (RGB) across the entire dataset. These statistics are used for data normalization
+    in the transforms.Normalize() function. The computation is cached to avoid
+    recalculation on subsequent runs.
+    
+    The function performs a two-pass algorithm:
+    1. First pass: Calculate the mean across all images
+    2. Second pass: Calculate the variance using the computed mean
+    
+    Returns:
+        tuple: A tuple containing:
+            - mean (torch.Tensor): Per-channel mean values [R, G, B]
+            - std (torch.Tensor): Per-channel standard deviation values [R, G, B]
+            
+    Note:
+        Results are cached in 'mean_and_std.pt' file to avoid recomputation.
+        The function uses all available CPU cores for faster processing.
+        
+    Example:
+        >>> mean, std = compute_mean_and_std()
+        >>> print(f"Mean: {mean}, Std: {std}")
+        Mean: tensor([0.485, 0.456, 0.406]), Std: tensor([0.229, 0.224, 0.225])
     """
 
     cache_file = "mean_and_std.pt"
@@ -59,19 +106,90 @@ def compute_mean_and_std():
     )
 
     mean = 0.0
+    # First pass: Compute per-channel mean across entire dataset
+    # This loop processes each image batch and accumulates channel-wise means
     for images, _ in tqdm(dl, total=len(ds), desc="Computing mean", ncols=80):
+        """Mean computation loop.
+        
+        For each batch of images:
+        1. Get batch size (usually 1 since batch_size=1 in DataLoader)
+        2. Reshape images from [batch, channels, height, width] to [batch, channels, pixels]
+        3. Compute mean across spatial dimensions (axis=2) for each channel
+           - axis=2 refers to the pixel dimension after reshaping
+           - Original: [batch=1, channels=3, height=224, width=224]
+           - Reshaped: [batch=1, channels=3, pixels=50176] 
+           - images.mean(2) computes mean across all 50176 pixels for each channel
+        4. Sum across batch dimension (axis=0) to accumulate channel means
+           - axis=0 refers to the batch dimension
+           - .sum(0) sums across batches to get total for each channel [R, G, B]
+           - Since batch_size=1, this just removes the batch dimension
+
+        TENSOR DIMENSION BREAKDOWN:
+        ---------------------------
+        Original tensor shape: [batch, channels, height, width] = [1, 3, 224, 224]
+        - Dimension 0 (axis=0): batch dimension (1 image)
+        - Dimension 1 (axis=1): channel dimension (3 channels: R, G, B)
+        - Dimension 2 (axis=2): height dimension (224 pixels)
+        - Dimension 3 (axis=3): width dimension (224 pixels)
+        
+        After reshaping with .view(batch_samples, images.size(1), -1):
+        Reshaped tensor shape: [batch, channels, flattened_pixels] = [1, 3, 50176]
+        - Dimension 0 (axis=0): batch dimension (still 1 image)
+        - Dimension 1 (axis=1): channel dimension (still 3 channels: R, G, B)  
+        - Dimension 2 (axis=2): flattened pixel dimension (224×224 = 50176 pixels)
+        
+        KEY CONCEPT: Even after flattening, the tensor still has 3 dimensions!
+        The pixels are flattened but they occupy dimension 2 of the tensor.
+        
+        OPERATIONS EXPLAINED:
+        ---------------------
+        1. images.mean(2): Compute mean along axis=2 (the 50176 flattened pixels)
+           - Input:  [1, 3, 50176] 
+           - Output: [1, 3] (mean pixel value for each channel in each batch)
+           
+        2. .sum(0): Sum along axis=0 (the batch dimension)
+           - Input:  [1, 3] 
+           - Output: [3] (accumulated channel means: [R_mean, G_mean, B_mean])
+           - Since batch=1, this just removes the batch dimension
+        
+        Variables:
+            batch_samples (int): Number of images in current batch (1)
+            images (torch.Tensor): Reshaped tensor [1, 3, 50176]
+            mean (torch.Tensor): Accumulated channel means [R_total, G_total, B_total]
+        """
         batch_samples = images.size(0)
         images = images.view(batch_samples, images.size(1), -1)
         mean += images.mean(2).sum(0)
-    mean = mean / len(dl.dataset)
+    mean = mean / len(dl.dataset)  # Normalize by total number of images
 
     var = 0.0
     npix = 0
+    # Second pass: Compute per-channel variance using the computed mean
+    # This loop calculates squared deviations from mean for standard deviation
     for images, _ in tqdm(dl, total=len(ds), desc="Computing std", ncols=80):
+        """Variance computation loop.
+        
+        For each batch of images:
+        1. Get batch size and reshape images to [batch, channels, pixels]
+        2. Broadcast mean to match image dimensions: [channels] -> [channels, 1]
+        3. Compute squared differences: (pixel_value - channel_mean)²
+        4. Sum across batch and spatial dimensions to accumulate variance
+        5. Count total pixels for final normalization
+        
+        Variables:
+            batch_samples (int): Number of images in current batch
+            images (torch.Tensor): Reshaped tensor [batch, channels, height*width]
+            mean.unsqueeze(1) (torch.Tensor): Mean broadcasted to [channels, 1]
+            var (torch.Tensor): Accumulated sum of squared deviations per channel
+            npix (int): Total number of pixels processed across all images
+        
+        Mathematical operation:
+            var += Σ(pixel - μ)² for each channel across batch and spatial dims
+        """
         batch_samples = images.size(0)
         images = images.view(batch_samples, images.size(1), -1)
         var += ((images - mean.unsqueeze(1)) ** 2).sum([0, 2])
-        npix += images.nelement()
+        npix += images.nelement()  # Total pixels = batch_size * channels * height * width
 
     std = torch.sqrt(var / (npix / 3))
 
@@ -82,6 +200,31 @@ def compute_mean_and_std():
 
 
 def get_transforms(rand_augment_magnitude):
+    """Create data transformation pipelines for training and validation.
+    
+    This function creates separate transformation pipelines for training and validation
+    datasets. The training pipeline includes data augmentation techniques like random
+    cropping, horizontal flipping, and RandAugment, while the validation pipeline
+    only includes basic preprocessing without augmentation.
+    
+    Args:
+        rand_augment_magnitude (int): Magnitude parameter for RandAugment transformation.
+            Higher values apply stronger augmentations. Typical range is 0-30.
+            
+    Returns:
+        dict: Dictionary containing transformation pipelines with keys:
+            - 'train': Training transformations with augmentation
+            - 'valid': Validation transformations without augmentation
+            
+    Note:
+        All transformations normalize images using dataset-specific mean and std.
+        Images are resized to 256x256 then cropped to 224x224 for model input.
+        
+    Example:
+        >>> transforms = get_transforms(rand_augment_magnitude=9)
+        >>> train_transform = transforms['train']
+        >>> valid_transform = transforms['valid']
+    """
 
     # These are the per-channel mean and std of CIFAR-10 over the dataset
     mean, std = compute_mean_and_std()
@@ -130,17 +273,40 @@ def get_transforms(rand_augment_magnitude):
 def get_data_loaders(
     batch_size: int = 32, valid_size: float = 0.2, num_workers: int = -1, limit: int = -1, rand_augment_magnitude: int = 9
 ):
-    """
-    Create and returns the train_one_epoch, validation and test data loaders.
-
-    :param batch_size: size of the mini-batches
-    :param valid_size: fraction of the dataset to use for validation. For example 0.2
-                       means that 20% of the dataset will be used for validation
-    :param num_workers: number of workers to use in the data loaders. Use -1 to mean
-                        "use all my cores"
-    :param limit: maximum number of data points to consider
-    :return a dictionary with 3 keys: 'train_one_epoch', 'valid' and 'test' containing respectively the
-            train_one_epoch, validation and test data loaders
+    """Create and return training and validation data loaders.
+    
+    This function creates PyTorch DataLoader objects for training and validation
+    datasets with appropriate transformations and sampling strategies. The function
+    automatically splits the dataset into training and validation sets based on
+    the specified validation size.
+    
+    Args:
+        batch_size (int, optional): Size of mini-batches for training. Defaults to 32.
+        valid_size (float, optional): Fraction of dataset to use for validation.
+            Must be between 0 and 1. For example, 0.2 means 20% for validation.
+            Defaults to 0.2.
+        num_workers (int, optional): Number of worker processes for data loading.
+            Use -1 to utilize all available CPU cores. Defaults to -1.
+        limit (int, optional): Maximum number of data points to consider.
+            Use -1 for no limit. Useful for debugging with smaller datasets.
+            Defaults to -1.
+        rand_augment_magnitude (int, optional): Magnitude for RandAugment transformations.
+            Higher values apply stronger augmentations. Defaults to 9.
+            
+    Returns:
+        dict: Dictionary containing data loaders with keys:
+            - 'train': Training data loader with augmented data
+            - 'valid': Validation data loader without augmentation
+            
+    Note:
+        The function prints dataset statistics (mean and std) for verification.
+        Random sampling ensures different train/validation splits across runs.
+        
+    Example:
+        >>> loaders = get_data_loaders(batch_size=64, valid_size=0.15)
+        >>> train_loader = loaders['train']
+        >>> valid_loader = loaders['valid']
+        >>> print(f"Training batches: {len(train_loader)}")
     """
 
     if num_workers == -1:
@@ -156,50 +322,20 @@ def get_data_loaders(
     mean, std = compute_mean_and_std()
     print(f"Dataset mean: {mean}, std: {std}")
 
-    # YOUR CODE HERE:
-    # create 3 sets of data transforms: one for the training dataset,
-    # containing data augmentation, one for the validation dataset
-    # (without data augmentation) and one for the test set (again
-    # without augmentation)
-    # HINT: resize the image to 256 first, then crop them to 224, then add the
-    # appropriate transforms for that step
-    data_transforms = get_transforms(rand_augment_magnitude)
-#     data_transforms = {
-#         "train": transforms.Compose(
-#             # YOUR CODE HERE
-#             [  # -
-#                 transforms.Resize(256),  # -
-#                 transforms.RandomCrop(224, padding_mode="reflect", pad_if_needed=True),  # -
-#                 transforms.AutoAugment(transforms.AutoAugmentPolicy.IMAGENET),  # -
-#                 transforms.ToTensor(),  # -
-#                 transforms.Normalize(mean, std),  # -
-#             ]  # -
-#         ),
-#         "valid": transforms.Compose(
-#             # YOUR CODE HERE
-#             [  # -
-#                 transforms.Resize(256),  # -
-#                 transforms.CenterCrop(224),  # -
-#                 transforms.ToTensor(),  # -
-#                 transforms.Normalize(mean, std),  # -
-#             ]  # -
-#         )
-#     }
-
     # Create train and validation datasets
     train_data = datasets.ImageFolder(
         base_path,
-        # YOUR CODE HERE: add the appropriate transform that you defined in
+        # add the appropriate transform that you defined in
         # the data_transforms dictionary
-        transform=data_transforms["train"]  # -
+        transform=data_transforms["train"]
     )
     # The validation dataset is a split from the train_one_epoch dataset, so we read
     # from the same folder, but we apply the transforms for validation
     valid_data = datasets.ImageFolder(
         base_path,
-        # YOUR CODE HERE: add the appropriate transform that you defined in
+        # add the appropriate transform that you defined in
         # the data_transforms dictionary
-        transform=data_transforms["valid"]  # -
+        transform=data_transforms["valid"]
     )
 
     # obtain training indices that will be used for validation
@@ -226,19 +362,41 @@ def get_data_loaders(
         num_workers=num_workers,
     )
     data_loaders["valid"] = torch.utils.data.DataLoader(
-        # YOUR CODE HERE
-        valid_data,  # -
-        batch_size=batch_size,  # -
-        sampler=valid_sampler,  # -
-        num_workers=num_workers,  # -
+        valid_data,
+        batch_size=batch_size,
+        sampler=valid_sampler,
+        num_workers=num_workers,
     )
 
     return data_loaders
 
 
 def train_one_epoch(train_dataloader, model, optimizer, loss):
-    """
-    Performs one epoch of training
+    """Perform one epoch of model training.
+    
+    This function executes a complete training epoch, processing all batches
+    in the training dataset. It handles the forward pass, loss computation,
+    backpropagation, and parameter updates for each batch.
+    
+    Args:
+        train_dataloader (torch.utils.data.DataLoader): DataLoader containing
+            training data batches.
+        model (torch.nn.Module): Neural network model to train.
+        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
+        loss (torch.nn.Module): Loss function for computing training loss.
+        
+    Returns:
+        float: Average training loss across all batches in the epoch.
+        
+    Note:
+        - Automatically moves model and data to GPU if available
+        - Sets model to training mode for proper batch normalization and dropout
+        - Uses running average to compute epoch loss
+        - Displays progress bar with tqdm
+        
+    Example:
+        >>> train_loss = train_one_epoch(train_loader, model, optimizer, criterion)
+        >>> print(f"Training loss: {train_loss:.4f}")
     """
 
     # Move model to GPU if available
@@ -284,8 +442,31 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
 
 
 def valid_one_epoch(valid_dataloader, model, loss):
-    """
-    Validate at the end of one epoch
+    """Perform one epoch of model validation.
+    
+    This function evaluates the model on the validation dataset without updating
+    model parameters. It computes the validation loss to monitor model performance
+    and detect overfitting during training.
+    
+    Args:
+        valid_dataloader (torch.utils.data.DataLoader): DataLoader containing
+            validation data batches.
+        model (torch.nn.Module): Neural network model to validate.
+        loss (torch.nn.Module): Loss function for computing validation loss.
+        
+    Returns:
+        float: Average validation loss across all batches.
+        
+    Note:
+        - Disables gradient computation for efficiency using torch.no_grad()
+        - Sets model to evaluation mode for proper batch normalization and dropout
+        - Automatically moves model and data to GPU if available
+        - Uses running average to compute epoch loss
+        - Displays progress bar with tqdm
+        
+    Example:
+        >>> valid_loss = valid_one_epoch(valid_loader, model, criterion)
+        >>> print(f"Validation loss: {valid_loss:.4f}")
     """
 
     # During validation we don't need to accumulate gradients
@@ -327,6 +508,38 @@ def valid_one_epoch(valid_dataloader, model, loss):
 
 
 def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
+    """Train and validate model over multiple epochs with optimization.
+    
+    This function orchestrates the complete training process, including training
+    and validation loops, learning rate scheduling, model checkpointing, and
+    optional interactive loss plotting. It implements early stopping based on
+    validation loss improvement.
+    
+    Args:
+        data_loaders (dict): Dictionary containing 'train' and 'valid' DataLoaders.
+        model (torch.nn.Module): Neural network model to train.
+        optimizer (torch.optim.Optimizer): Optimizer for parameter updates.
+        loss (torch.nn.Module): Loss function for training and validation.
+        n_epochs (int): Number of training epochs to run.
+        save_path (str): File path to save the best model weights.
+        interactive_tracking (bool, optional): Whether to display live loss plots.
+            Defaults to False.
+            
+    Returns:
+        None: Function saves best model to save_path and optionally displays plots.
+        
+    Note:
+        - Uses ReduceLROnPlateau scheduler to reduce learning rate when validation
+          loss plateaus
+        - Saves model weights when validation loss improves by more than 1%
+        - Tracks training loss, validation loss, and learning rate
+        - Interactive tracking requires matplotlib backend support
+        
+    Example:
+        >>> optimize(data_loaders, model, optimizer, criterion, 
+        ...          n_epochs=50, save_path='best_model.pth', 
+        ...          interactive_tracking=True)
+    """
     
     def after_subplot(ax: plt.Axes, group_name: str, x_label: str):
         """Add title xlabel and legend to single chart"""
@@ -348,7 +561,7 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
     # plateau
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(  # =
         optimizer, "min", verbose=True, threshold=0.01  # -
-    )  # -
+    )  
 
     for epoch in range(1, n_epochs + 1):
 
@@ -369,7 +582,7 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
             valid_loss_min = valid_loss
 
         # Update learning rate, i.e., make a step in the learning rate scheduler
-        scheduler.step(valid_loss)  # -
+        scheduler.step(valid_loss)
 
         # Log the losses and the current learning rate
         if interactive_tracking:
@@ -382,6 +595,38 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
 
             
 def one_epoch_test(test_dataloader, model, loss):
+    """Evaluate model performance on test dataset.
+    
+    This function performs comprehensive evaluation of the trained model on the
+    test dataset, computing loss, accuracy, and collecting predictions for
+    further analysis. It provides detailed performance metrics and returns
+    predictions for confusion matrix generation.
+    
+    Args:
+        test_dataloader (torch.utils.data.DataLoader): DataLoader containing
+            test data batches.
+        model (torch.nn.Module): Trained neural network model to evaluate.
+        loss (torch.nn.Module): Loss function for computing test loss.
+        
+    Returns:
+        tuple: A tuple containing:
+            - test_loss (float): Average test loss across all batches
+            - preds (list): List of predicted class indices
+            - actuals (list): List of actual class indices
+            
+    Note:
+        - Disables gradient computation for efficiency
+        - Sets model to evaluation mode
+        - Automatically moves model and data to GPU if available
+        - Computes accuracy as percentage of correct predictions
+        - Prints test loss and accuracy to console
+        - Returns predictions and ground truth for confusion matrix analysis
+        
+    Example:
+        >>> test_loss, predictions, actuals = one_epoch_test(test_loader, model, criterion)
+        >>> print(f"Test Loss: {test_loss:.6f}")
+        >>> print(f"Test Accuracy: {accuracy:.2f}%")
+    """
     # monitor test loss and accuracy
     test_loss = 0.
     correct = 0.
@@ -441,6 +686,34 @@ def one_epoch_test(test_dataloader, model, loss):
 
 
 def plot_confusion_matrix(pred, truth, classes):
+    """Generate and display confusion matrix for classification results.
+    
+    This function creates a visual confusion matrix using seaborn heatmap
+    to analyze model performance across different classes. It helps identify
+    which classes are commonly confused with each other.
+    
+    Args:
+        pred (list or array-like): Predicted class labels from model.
+        truth (list or array-like): Ground truth class labels.
+        classes (list): List of class names for labeling the matrix axes.
+        
+    Returns:
+        pandas.DataFrame: Confusion matrix as a DataFrame with class names
+            as row and column labels.
+            
+    Note:
+        - Uses pandas crosstab for confusion matrix computation
+        - Creates heatmap with annotations showing count values
+        - Removes color bar for cleaner visualization
+        - Sets appropriate axis labels for interpretation
+        - Requires matplotlib and seaborn for visualization
+        
+    Example:
+        >>> classes = ['daisy', 'dandelion', 'rose', 'sunflower', 'tulip']
+        >>> cm = plot_confusion_matrix(predictions, ground_truth, classes)
+        >>> plt.show()
+        >>> print(f"Confusion matrix shape: {cm.shape}")
+    """
 
     gt = pd.Series(truth, name='Ground Truth')
     predicted = pd.Series(pred, name='Predicted')
@@ -463,7 +736,5 @@ def plot_confusion_matrix(pred, truth, classes):
         )
         ax.set_xlabel("truth")
         ax.set_ylabel("pred")
-
-    
 
     return confusion_matrix
