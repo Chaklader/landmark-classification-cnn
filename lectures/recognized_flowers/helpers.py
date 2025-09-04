@@ -357,6 +357,9 @@ def get_data_loaders(
     mean, std = compute_mean_and_std()
     print(f"Dataset mean: {mean}, std: {std}")
 
+    # Get the transforms for training and validation
+    data_transforms = get_transforms(rand_augment_magnitude)
+
     # Create train and validation datasets
     train_data = datasets.ImageFolder(
         base_path,
