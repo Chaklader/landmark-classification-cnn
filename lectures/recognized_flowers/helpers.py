@@ -33,6 +33,41 @@ torch.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 
 
+def get_device():
+    """Determine the best available device for PyTorch computations.
+    
+    This function checks for available compute devices in order of preference:
+    MPS (Apple Silicon GPU) > CUDA (NVIDIA GPU) > CPU. It returns the appropriate
+    torch.device object and prints which device is being used.
+    
+    Returns:
+        torch.device: The best available device for computation.
+        
+    Note:
+        - MPS is preferred on Apple Silicon Macs for GPU acceleration
+        - CUDA is used if available on systems with NVIDIA GPUs
+        - Falls back to CPU if neither MPS nor CUDA are available
+        - Prints device selection for user feedback
+        
+    Example:
+        >>> device = get_device()
+        Using MPS (Metal Performance Shaders)
+        >>> model = model.to(device)
+        >>> data = data.to(device)
+    """
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("Using MPS (Metal Performance Shaders)")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("Using CUDA")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU")
+    
+    return device
+
+
 def get_data_location():
     """Find the location of the dataset, either locally or in the Udacity workspace.
     
@@ -389,7 +424,7 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
         float: Average training loss across all batches in the epoch.
         
     Note:
-        - Automatically moves model and data to GPU if available
+        - Automatically moves model and data to best available device (MPS/CUDA/CPU)
         - Sets model to training mode for proper batch normalization and dropout
         - Uses running average to compute epoch loss
         - Displays progress bar with tqdm
@@ -399,9 +434,9 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
         >>> print(f"Training loss: {train_loss:.4f}")
     """
 
-    # Move model to GPU if available
-    if torch.cuda.is_available():
-        model.cuda()  # -
+    # Get the best available device and move model to it
+    device = get_device()
+    model = model.to(device)
 
     # Set the model in training mode
     # (so all layers that behave differently between training and evaluation,
@@ -418,9 +453,8 @@ def train_one_epoch(train_dataloader, model, optimizer, loss):
         leave=True,
         ncols=80,
     ):
-        # move data to GPU if available
-        if torch.cuda.is_available():
-            data, target = data.cuda(), target.cuda()
+        # move data to the selected device
+        data, target = data.to(device), target.to(device)
 
         # 1. clear the gradients of all optimized variables
         optimizer.zero_grad()  # -
@@ -460,7 +494,7 @@ def valid_one_epoch(valid_dataloader, model, loss):
     Note:
         - Disables gradient computation for efficiency using torch.no_grad()
         - Sets model to evaluation mode for proper batch normalization and dropout
-        - Automatically moves model and data to GPU if available
+        - Automatically moves model and data to best available device (MPS/CUDA/CPU)
         - Uses running average to compute epoch loss
         - Displays progress bar with tqdm
         
@@ -469,6 +503,9 @@ def valid_one_epoch(valid_dataloader, model, loss):
         >>> print(f"Validation loss: {valid_loss:.4f}")
     """
 
+    # Get the best available device
+    device = get_device()
+    
     # During validation we don't need to accumulate gradients
     with torch.no_grad():
 
@@ -477,9 +514,8 @@ def valid_one_epoch(valid_dataloader, model, loss):
         # like batchnorm and dropout, will select their evaluation behavior)
         model.eval()  # -
 
-        # If the GPU is available, move the model to the GPU
-        if torch.cuda.is_available():
-            model.cuda()
+        # Move the model to the selected device
+        model = model.to(device)
 
         # Loop over the validation dataset and accumulate the loss
         valid_loss = 0.0
@@ -490,9 +526,8 @@ def valid_one_epoch(valid_dataloader, model, loss):
             leave=True,
             ncols=80,
         ):
-            # move data to GPU if available
-            if torch.cuda.is_available():
-                data, target = data.cuda(), target.cuda()
+            # move data to the selected device
+            data, target = data.to(device), target.to(device)
 
             # 1. forward pass: compute predicted outputs by passing inputs to the model
             output = model(data)  # =
@@ -617,7 +652,7 @@ def one_epoch_test(test_dataloader, model, loss):
     Note:
         - Disables gradient computation for efficiency
         - Sets model to evaluation mode
-        - Automatically moves model and data to GPU if available
+        - Automatically moves model and data to best available device (MPS/CUDA/CPU)
         - Computes accuracy as percentage of correct predictions
         - Prints test loss and accuracy to console
         - Returns predictions and ground truth for confusion matrix analysis
@@ -632,15 +667,17 @@ def one_epoch_test(test_dataloader, model, loss):
     correct = 0.
     total = 0.
 
+    # Get the best available device
+    device = get_device()
+
     # we do not need the gradients
     with torch.no_grad():
 
         # set the model to evaluation mode
         model.eval()  # -
 
-        # if the GPU is available, move the model to the GPU
-        if torch.cuda.is_available():
-            model = model.cuda()
+        # move the model to the selected device
+        model = model.to(device)
 
         # Loop over test dataset
         # We also accumulate predictions and targets so we can return them
@@ -654,9 +691,8 @@ def one_epoch_test(test_dataloader, model, loss):
                 leave=True,
                 ncols=80
         ):
-            # move data to GPU if available
-            if torch.cuda.is_available():
-                data, target = data.cuda(), target.cuda()
+            # move data to the selected device
+            data, target = data.to(device), target.to(device)
 
             # 1. forward pass: compute predicted outputs by passing inputs to the model
             logits = model(data)  # =
