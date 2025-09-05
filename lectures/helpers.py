@@ -8,8 +8,151 @@ from livelossplot.outputs import MatplotlibPlot
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets
 from tqdm import tqdm
+import math
+import torch
+import torch.utils.data
+from pathlib import Path
+from torchvision import datasets, transforms
+import matplotlib.pyplot as plt
+import multiprocessing
 
 
+
+def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2, num_workers: int = -1, limit: int = -1):
+    """
+    Orchestrates the creation of training, validation, and test data loaders.
+
+    This function sets up the entire data loading and preprocessing pipeline. It defines
+    distinct data augmentation and normalization transformations for the training set (to
+    improve model generalization) and the validation/test sets (for consistent
+    evaluation). It loads images from disk, splits the training data into training and
+    validation subsets, and wraps them in `DataLoader` objects for efficient batching
+    and parallel loading.
+
+    Args:
+        batch_size (int): The number of samples per batch.
+        valid_size (float): The fraction of the training data to reserve for validation.
+        num_workers (int): The number of subprocesses to use for data loading. -1 means
+                         using all available CPUs.
+        limit (int): The maximum number of data points to use. Useful for debugging.
+
+    Returns:
+        dict: A dictionary containing 'train', 'valid', and 'test' `DataLoader` objects.
+    """
+
+    if num_workers == -1:
+        # Use all cores
+        num_workers = multiprocessing.cpu_count()
+
+    # We will fill this up later
+    data_loaders = {"train": None, "valid": None, "test": None}
+
+    base_path = Path(get_data_location())
+
+    # Compute mean and std of the dataset
+    mean, std = compute_mean_and_std()
+    print(f"Dataset mean: {mean}, std: {std}")
+
+    """
+    The following dictionary defines the transformations for the training, validation,
+    and testing datasets.
+
+    - The 'train' transform includes data augmentation (RandomResizedCrop,
+      RandomHorizontalFlip, RandomRotation, ColorJitter) to help the model generalize
+      and prevent overfitting.
+    - The 'valid' and 'test' transforms are identical and use a deterministic
+      CenterCrop. This ensures that we get a consistent, comparable evaluation of
+      the model's performance on unseen data.
+    """
+    data_transforms = {
+        "train": transforms.Compose([
+            transforms.Resize(256),
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(10),
+            transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        "valid": transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        "test": transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+    }
+
+    # Create train and validation datasets
+    train_data = datasets.ImageFolder(
+        base_path / "train",
+        transform=data_transforms["train"]
+    )
+
+    valid_data = datasets.ImageFolder(
+        base_path / "train",
+        transform=data_transforms["valid"]
+    )
+
+    # obtain training indices that will be used for validation
+    n_tot = len(train_data)
+    indices = torch.randperm(n_tot)
+
+    # If requested, limit the number of data points to consider
+    if limit > 0:
+        indices = indices[:limit]
+        n_tot = limit
+
+    split = int(math.ceil(valid_size * n_tot))
+    train_idx, valid_idx = indices[split:], indices[:split]
+
+    # define samplers for obtaining training and validation batches
+    train_sampler = torch.utils.data.SubsetRandomSampler(train_idx)
+    valid_sampler = torch.utils.data.SubsetRandomSampler(valid_idx)
+
+    # prepare data loaders
+    data_loaders["train"] = torch.utils.data.DataLoader(
+        train_data,
+        batch_size=batch_size,
+        sampler=train_sampler,
+        num_workers=num_workers
+    )
+
+    data_loaders["valid"] = torch.utils.data.DataLoader(
+        valid_data,
+        batch_size=batch_size,
+        sampler=valid_sampler,
+        num_workers=num_workers
+    )
+
+    # Create test dataset
+    test_data = datasets.ImageFolder(
+        base_path / "test",
+        transform=data_transforms["test"]
+    )
+
+    if limit > 0:
+        indices = torch.arange(limit)
+        test_sampler = torch.utils.data.SubsetRandomSampler(indices)
+    else:
+        test_sampler = None
+
+    # Create test dataloader
+    data_loaders["test"] = torch.utils.data.DataLoader(
+        test_data,
+        batch_size=batch_size,
+        sampler=test_sampler,
+        shuffle=False,
+        num_workers=num_workers
+    )
+
+    return data_loaders
+    
 def get_train_val_data_loaders(batch_size, valid_size, transforms, num_workers):
     """
     Splits the CIFAR10 training dataset into training and validation sets.
