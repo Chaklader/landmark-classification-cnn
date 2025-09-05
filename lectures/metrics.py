@@ -192,6 +192,30 @@ def _get_stats_multiclass(
     num_classes: int,
     ignore_index: Optional[int],
 ) -> Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]:
+    """
+    Calculate confusion matrix statistics for multiclass classification.
+    
+    Computes True Positives (TP), False Positives (FP), False Negatives (FN),
+    and True Negatives (TN) for each class in a multiclass setting.
+    
+    Args:
+        output (torch.LongTensor): Predicted class labels with shape (batch_size, *dims)
+        target (torch.LongTensor): Ground truth class labels with shape (batch_size, *dims)
+        num_classes (int): Total number of classes in the classification problem
+        ignore_index (Optional[int]): Class index to ignore in metric calculation.
+            Pixels/samples with this label are excluded from all statistics.
+    
+    Returns:
+        Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]:
+            - tp_count: True positives per class, shape (batch_size, num_classes)
+            - fp_count: False positives per class, shape (batch_size, num_classes)
+            - fn_count: False negatives per class, shape (batch_size, num_classes)
+            - tn_count: True negatives per class, shape (batch_size, num_classes)
+    
+    Note:
+        Uses histogram-based counting for efficient computation of confusion matrix
+        statistics across all classes simultaneously.
+    """
 
     batch_size, *dims = output.shape
     num_elements = torch.prod(torch.tensor(dims)).long()
@@ -231,6 +255,29 @@ def _get_stats_multilabel(
     output: torch.LongTensor,
     target: torch.LongTensor,
 ) -> Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]:
+    """
+    Calculate confusion matrix statistics for multilabel classification.
+    
+    Computes TP, FP, FN, and TN for each label in a multilabel setting where
+    each sample can belong to multiple classes simultaneously.
+    
+    Args:
+        output (torch.LongTensor): Predicted binary labels with shape 
+            (batch_size, num_classes, *dims). Values should be 0 or 1.
+        target (torch.LongTensor): Ground truth binary labels with shape
+            (batch_size, num_classes, *dims). Values should be 0 or 1.
+    
+    Returns:
+        Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor, torch.LongTensor]:
+            - tp: True positives per label, shape (batch_size, num_classes)
+            - fp: False positives per label, shape (batch_size, num_classes)
+            - fn: False negatives per label, shape (batch_size, num_classes)
+            - tn: True negatives per label, shape (batch_size, num_classes)
+    
+    Note:
+        Each label is treated independently, allowing for multiple positive
+        labels per sample in multilabel classification scenarios.
+    """
 
     batch_size, num_classes, *dims = target.shape
     output = output.view(batch_size, num_classes, -1)
@@ -250,6 +297,25 @@ def _get_stats_multilabel(
 
 
 def _handle_zero_division(x, zero_division):
+    """
+    Handle division by zero in metric calculations.
+    
+    Replaces NaN values (resulting from zero division) with specified values
+    and optionally issues warnings.
+    
+    Args:
+        x (torch.Tensor): Tensor potentially containing NaN values from division by zero
+        zero_division (Union[str, float]): How to handle zero division:
+            - "warn": Replace NaN with 0 and issue warning
+            - float value: Replace NaN with this value
+    
+    Returns:
+        torch.Tensor: Input tensor with NaN values replaced
+    
+    Note:
+        Common in metrics like precision/recall when no positive predictions
+        or ground truth labels exist for a class.
+    """
     nans = torch.isnan(x)
     if torch.any(nans) and zero_division == "warn":
         warnings.warn("Zero division in metric calculation!")
@@ -270,6 +336,40 @@ def _compute_metric(
     zero_division="warn",
     **metric_kwargs,
 ) -> float:
+    """
+    Generic metric computation with various reduction strategies.
+    
+    Applies a metric function to confusion matrix statistics with different
+    aggregation methods across classes and samples.
+    
+    Args:
+        metric_fn (callable): Function that computes metric from (tp, fp, fn, tn)
+        tp (torch.Tensor): True positives with shape (batch_size, num_classes)
+        fp (torch.Tensor): False positives with shape (batch_size, num_classes)
+        fn (torch.Tensor): False negatives with shape (batch_size, num_classes)
+        tn (torch.Tensor): True negatives with shape (batch_size, num_classes)
+        reduction (Optional[str]): How to aggregate across classes/samples:
+            - "micro": Pool all classes together before computing metric
+            - "macro": Compute metric per class, then average
+            - "weighted": Compute metric per class, then weighted average
+            - "micro-imagewise": Compute metric per sample, then average
+            - None: Return per-class metrics without aggregation
+        class_weights (Optional[List[float]]): Weights for each class in weighted reduction
+        zero_division (Union[str, float]): How to handle division by zero
+        **metric_kwargs: Additional arguments passed to metric_fn
+    
+    Returns:
+        float or torch.Tensor: Computed metric value(s)
+    
+    Raises:
+        ValueError: If weighted reduction is requested without class_weights
+    
+    Note:
+        Different reduction strategies are useful for different scenarios:
+        - Micro: Good for imbalanced datasets, emphasizes frequent classes
+        - Macro: Treats all classes equally regardless of frequency
+        - Weighted: Balances between micro and macro based on class frequency
+    """
 
     if class_weights is None and reduction is not None and "weighted" in reduction:
         raise ValueError(f"Class weights should be provided for `{reduction}` reduction")
@@ -325,6 +425,26 @@ def _compute_metric(
 
 
 def _fbeta_score(tp, fp, fn, tn, beta=1):
+    """
+    Compute F-beta score from confusion matrix statistics.
+    
+    F-beta score is the weighted harmonic mean of precision and recall,
+    where beta controls the relative importance of recall vs precision.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives  
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives (unused in calculation)
+        beta (float): Weight of recall in harmonic mean. beta=1 gives F1 score,
+                     beta<1 emphasizes precision, beta>1 emphasizes recall
+    
+    Returns:
+        torch.Tensor: F-beta scores
+    
+    Formula:
+        F_β = (1 + β²) × TP / ((1 + β²) × TP + β² × FN + FP)
+    """
     beta_tp = (1 + beta ** 2) * tp
     beta_fn = (beta ** 2) * fn
     score = beta_tp / (beta_tp + beta_fn + fp)
@@ -332,54 +452,284 @@ def _fbeta_score(tp, fp, fn, tn, beta=1):
 
 
 def _iou_score(tp, fp, fn, tn):
+    """
+    Compute Intersection over Union (IoU) score, also known as Jaccard index.
+    
+    IoU measures the overlap between predicted and ground truth regions.
+    Commonly used in object detection and segmentation tasks.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives (unused in calculation)
+    
+    Returns:
+        torch.Tensor: IoU scores in range [0, 1]
+    
+    Formula:
+        IoU = TP / (TP + FP + FN)
+    """
     return tp / (tp + fp + fn)
 
 
 def _accuracy(tp, fp, fn, tn):
+    """
+    Compute classification accuracy.
+    
+    Accuracy is the fraction of predictions that match the ground truth labels.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: Accuracy scores in range [0, 1]
+    
+    Formula:
+        Accuracy = (TP + TN) / (TP + FP + FN + TN)
+    """
     return (tp + tn) / (tp + fp + fn + tn)
 
 
 def _sensitivity(tp, fp, fn, tn):
+    """
+    Compute sensitivity (recall, true positive rate).
+    
+    Sensitivity measures the proportion of actual positives correctly identified.
+    Also known as recall, hit rate, or true positive rate (TPR).
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives (unused in calculation)
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives (unused in calculation)
+    
+    Returns:
+        torch.Tensor: Sensitivity scores in range [0, 1]
+    
+    Formula:
+        Sensitivity = TP / (TP + FN)
+    """
     return tp / (tp + fn)
 
 
 def _specificity(tp, fp, fn, tn):
+    """
+    Compute specificity (true negative rate).
+    
+    Specificity measures the proportion of actual negatives correctly identified.
+    Also known as true negative rate (TNR) or selectivity.
+    
+    Args:
+        tp (torch.Tensor): True positives (unused in calculation)
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives (unused in calculation)
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: Specificity scores in range [0, 1]
+    
+    Formula:
+        Specificity = TN / (TN + FP)
+    """
     return tn / (tn + fp)
 
 
 def _balanced_accuracy(tp, fp, fn, tn):
+    """
+    Compute balanced accuracy.
+    
+    Balanced accuracy is the arithmetic mean of sensitivity and specificity.
+    Useful for imbalanced datasets where regular accuracy can be misleading.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: Balanced accuracy scores in range [0, 1]
+    
+    Formula:
+        Balanced Accuracy = (Sensitivity + Specificity) / 2
+    """
     return (_sensitivity(tp, fp, fn, tn) + _specificity(tp, fp, fn, tn)) / 2
 
 
 def _positive_predictive_value(tp, fp, fn, tn):
+    """
+    Compute positive predictive value (precision).
+    
+    PPV measures the proportion of positive predictions that are actually correct.
+    Also known as precision.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives (unused in calculation)
+        tn (torch.Tensor): True negatives (unused in calculation)
+    
+    Returns:
+        torch.Tensor: PPV scores in range [0, 1]
+    
+    Formula:
+        PPV = TP / (TP + FP)
+    """
     return tp / (tp + fp)
 
 
 def _negative_predictive_value(tp, fp, fn, tn):
+    """
+    Compute negative predictive value.
+    
+    NPV measures the proportion of negative predictions that are actually correct.
+    
+    Args:
+        tp (torch.Tensor): True positives (unused in calculation)
+        fp (torch.Tensor): False positives (unused in calculation)
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: NPV scores in range [0, 1]
+    
+    Formula:
+        NPV = TN / (TN + FN)
+    """
     return tn / (tn + fn)
 
 
 def _false_negative_rate(tp, fp, fn, tn):
+    """
+    Compute false negative rate (miss rate).
+    
+    FNR measures the proportion of actual positives that were incorrectly
+    classified as negative. Also known as miss rate.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives (unused in calculation)
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives (unused in calculation)
+    
+    Returns:
+        torch.Tensor: FNR scores in range [0, 1]
+    
+    Formula:
+        FNR = FN / (FN + TP) = 1 - Sensitivity
+    """
     return fn / (fn + tp)
 
 
 def _false_positive_rate(tp, fp, fn, tn):
+    """
+    Compute false positive rate (fall-out).
+    
+    FPR measures the proportion of actual negatives that were incorrectly
+    classified as positive. Also known as fall-out or false alarm rate.
+    
+    Args:
+        tp (torch.Tensor): True positives (unused in calculation)
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives (unused in calculation)
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: FPR scores in range [0, 1]
+    
+    Formula:
+        FPR = FP / (FP + TN) = 1 - Specificity
+    """
     return fp / (fp + tn)
 
 
 def _false_discovery_rate(tp, fp, fn, tn):
+    """
+    Compute false discovery rate.
+    
+    FDR measures the proportion of positive predictions that are actually incorrect.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives (unused in calculation)
+        tn (torch.Tensor): True negatives (unused in calculation)
+    
+    Returns:
+        torch.Tensor: FDR scores in range [0, 1]
+    
+    Formula:
+        FDR = FP / (FP + TP) = 1 - Precision
+    """
     return 1 - _positive_predictive_value(tp, fp, fn, tn)
 
 
 def _false_omission_rate(tp, fp, fn, tn):
+    """
+    Compute false omission rate.
+    
+    FOR measures the proportion of negative predictions that are actually incorrect.
+    
+    Args:
+        tp (torch.Tensor): True positives (unused in calculation)
+        fp (torch.Tensor): False positives (unused in calculation)
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: FOR scores in range [0, 1]
+    
+    Formula:
+        FOR = FN / (FN + TN) = 1 - NPV
+    """
     return 1 - _negative_predictive_value(tp, fp, fn, tn)
 
 
 def _positive_likelihood_ratio(tp, fp, fn, tn):
+    """
+    Compute positive likelihood ratio (LR+).
+    
+    LR+ indicates how much more likely a positive test result is in patients
+    with the condition compared to those without.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: LR+ scores (range [1, ∞] for good tests)
+    
+    Formula:
+        LR+ = Sensitivity / (1 - Specificity) = TPR / FPR
+    """
     return _sensitivity(tp, fp, fn, tn) / _false_positive_rate(tp, fp, fn, tn)
 
 
 def _negative_likelihood_ratio(tp, fp, fn, tn):
+    """
+    Compute negative likelihood ratio (LR-).
+    
+    LR- indicates how much less likely a negative test result is in patients
+    with the condition compared to those without.
+    
+    Args:
+        tp (torch.Tensor): True positives
+        fp (torch.Tensor): False positives
+        fn (torch.Tensor): False negatives
+        tn (torch.Tensor): True negatives
+    
+    Returns:
+        torch.Tensor: LR- scores (range [0, 1] for good tests)
+    
+    Formula:
+        LR- = (1 - Sensitivity) / Specificity = FNR / TNR
+    """
     return _false_negative_rate(tp, fp, fn, tn) / _specificity(tp, fp, fn, tn)
 
 
@@ -393,7 +743,30 @@ def fbeta_score(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """F beta score"""
+    """
+    Compute F-beta score with various aggregation strategies.
+    
+    F-beta score is the weighted harmonic mean of precision and recall,
+    where beta parameter controls the relative importance of recall vs precision.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        beta (float): Weight of recall in harmonic mean. Default 1.0 (F1 score)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: F-beta scores
+    
+    Note:
+        - beta=1: F1 score (equal weight to precision and recall)
+        - beta<1: Emphasizes precision over recall
+        - beta>1: Emphasizes recall over precision
+    """
     return _compute_metric(
         _fbeta_score,
         tp,
@@ -416,7 +789,27 @@ def f1_score(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """F1 score"""
+    """
+    Compute F1 score (harmonic mean of precision and recall).
+    
+    F1 score is a special case of F-beta score with beta=1, giving equal
+    weight to precision and recall. Commonly used for binary classification.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: F1 scores in range [0, 1]
+    
+    Formula:
+        F1 = 2 * (precision * recall) / (precision + recall)
+    """
     return _compute_metric(
         _fbeta_score,
         tp,
@@ -439,7 +832,28 @@ def iou_score(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """IoU score or Jaccard index"""  # noqa
+    """
+    Compute Intersection over Union (IoU) score, also known as Jaccard index.
+    
+    IoU measures the overlap between predicted and ground truth regions.
+    Widely used in object detection, segmentation, and computer vision tasks.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: IoU scores in range [0, 1]
+    
+    Note:
+        IoU = 1 indicates perfect overlap, IoU = 0 indicates no overlap.
+        Commonly used threshold is IoU > 0.5 for positive detection.
+    """
     return _compute_metric(
         _iou_score,
         tp,
@@ -461,7 +875,28 @@ def accuracy(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Accuracy"""
+    """
+    Compute classification accuracy.
+    
+    Accuracy measures the fraction of predictions that match ground truth labels.
+    Simple and intuitive metric, but can be misleading for imbalanced datasets.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: Accuracy scores in range [0, 1]
+    
+    Note:
+        For imbalanced datasets, consider using balanced_accuracy,
+        precision, recall, or F1 score instead.
+    """
     return _compute_metric(
         _accuracy,
         tp,
@@ -483,7 +918,27 @@ def sensitivity(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Sensitivity, recall, hit rate, or true positive rate (TPR)"""
+    """
+    Compute sensitivity (recall, true positive rate).
+    
+    Sensitivity measures the proportion of actual positives correctly identified.
+    Critical metric when missing positive cases has high cost (e.g., medical diagnosis).
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: Sensitivity scores in range [0, 1]
+    
+    Aliases:
+        Also known as recall, hit rate, or true positive rate (TPR).
+    """
     return _compute_metric(
         _sensitivity,
         tp,
@@ -505,7 +960,27 @@ def specificity(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Specificity, selectivity or true negative rate (TNR)"""
+    """
+    Compute specificity (true negative rate, selectivity).
+    
+    Specificity measures the proportion of actual negatives correctly identified.
+    Critical metric when avoiding false positives is important (e.g., spam detection).
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: Specificity scores in range [0, 1]
+    
+    Aliases:
+        Also known as true negative rate (TNR) or selectivity.
+    """
     return _compute_metric(
         _specificity,
         tp,
@@ -527,7 +1002,28 @@ def balanced_accuracy(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Balanced accuracy"""
+    """
+    Compute balanced accuracy (arithmetic mean of sensitivity and specificity).
+    
+    Balanced accuracy is particularly useful for imbalanced datasets where
+    regular accuracy can be misleading due to class distribution skew.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: Balanced accuracy scores in range [0, 1]
+    
+    Note:
+        Balanced accuracy = (Sensitivity + Specificity) / 2
+        Ranges from 0.5 (random classifier) to 1.0 (perfect classifier).
+    """
     return _compute_metric(
         _balanced_accuracy,
         tp,
@@ -549,7 +1045,27 @@ def positive_predictive_value(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Precision or positive predictive value (PPV)"""
+    """
+    Compute positive predictive value (precision).
+    
+    PPV measures the proportion of positive predictions that are actually correct.
+    Important when the cost of false positives is high.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: PPV scores in range [0, 1]
+    
+    Aliases:
+        Also known as precision. Commonly used with recall in F1 score.
+    """
     return _compute_metric(
         _positive_predictive_value,
         tp,
@@ -571,7 +1087,28 @@ def negative_predictive_value(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Negative predictive value (NPV)"""
+    """
+    Compute negative predictive value.
+    
+    NPV measures the proportion of negative predictions that are actually correct.
+    Useful for assessing the reliability of negative test results.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: NPV scores in range [0, 1]
+    
+    Note:
+        High NPV indicates that negative predictions are reliable.
+        Complement to positive predictive value (precision).
+    """
     return _compute_metric(
         _negative_predictive_value,
         tp,
@@ -593,7 +1130,28 @@ def false_negative_rate(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Miss rate or false negative rate (FNR)"""
+    """
+    Compute false negative rate (miss rate).
+    
+    FNR measures the proportion of actual positives that were incorrectly
+    classified as negative. Critical in medical diagnosis and safety applications.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: FNR scores in range [0, 1]
+    
+    Note:
+        FNR = 1 - Sensitivity (recall). Lower values indicate better performance.
+        Also known as miss rate or Type II error rate.
+    """
     return _compute_metric(
         _false_negative_rate,
         tp,
@@ -615,7 +1173,28 @@ def false_positive_rate(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Fall-out or false positive rate (FPR)"""
+    """
+    Compute false positive rate (fall-out, false alarm rate).
+    
+    FPR measures the proportion of actual negatives that were incorrectly
+    classified as positive. Important in spam detection and security systems.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: FPR scores in range [0, 1]
+    
+    Note:
+        FPR = 1 - Specificity. Lower values indicate better performance.
+        Used in ROC curve analysis (x-axis) paired with TPR (y-axis).
+    """
     return _compute_metric(
         _false_positive_rate,
         tp,
@@ -637,7 +1216,28 @@ def false_discovery_rate(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """False discovery rate (FDR)"""  # noqa
+    """
+    Compute false discovery rate.
+    
+    FDR measures the proportion of positive predictions that are actually incorrect.
+    Important in multiple hypothesis testing and information retrieval.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: FDR scores in range [0, 1]
+    
+    Note:
+        FDR = 1 - Precision (PPV). Lower values indicate better performance.
+        Commonly controlled in statistical multiple testing procedures.
+    """
     return _compute_metric(
         _false_discovery_rate,
         tp,
@@ -659,7 +1259,28 @@ def false_omission_rate(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """False omission rate (FOR)"""  # noqa
+    """
+    Compute false omission rate.
+    
+    FOR measures the proportion of negative predictions that are actually incorrect.
+    Useful for assessing the reliability of negative screening results.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: FOR scores in range [0, 1]
+    
+    Note:
+        FOR = 1 - NPV. Lower values indicate better performance.
+        Complement to false discovery rate (FDR).
+    """
     return _compute_metric(
         _false_omission_rate,
         tp,
@@ -681,7 +1302,28 @@ def positive_likelihood_ratio(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Positive likelihood ratio (LR+)"""
+    """
+    Compute positive likelihood ratio (LR+).
+    
+    LR+ indicates how much more likely a positive test result is in subjects
+    with the condition compared to those without. Used in diagnostic testing.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: LR+ scores (range [1, ∞] for useful tests)
+    
+    Note:
+        LR+ = Sensitivity / (1 - Specificity) = TPR / FPR
+        Values > 10 indicate strong evidence for positive diagnosis.
+    """
     return _compute_metric(
         _positive_likelihood_ratio,
         tp,
@@ -703,7 +1345,28 @@ def negative_likelihood_ratio(
     class_weights: Optional[List[float]] = None,
     zero_division: Union[str, float] = 1.0,
 ) -> torch.Tensor:
-    """Negative likelihood ratio (LR-)"""
+    """
+    Compute negative likelihood ratio (LR-).
+    
+    LR- indicates how much less likely a negative test result is in subjects
+    with the condition compared to those without. Used in diagnostic testing.
+    
+    Args:
+        tp (torch.LongTensor): True positive counts, shape (N, C)
+        fp (torch.LongTensor): False positive counts, shape (N, C)
+        fn (torch.LongTensor): False negative counts, shape (N, C)
+        tn (torch.LongTensor): True negative counts, shape (N, C)
+        reduction (Optional[str]): Aggregation method across classes/samples
+        class_weights (Optional[List[float]]): Weights for weighted reduction
+        zero_division (Union[str, float]): Value for division by zero cases
+    
+    Returns:
+        torch.Tensor: LR- scores (range [0, 1] for useful tests)
+    
+    Note:
+        LR- = (1 - Sensitivity) / Specificity = FNR / TNR
+        Values < 0.1 indicate strong evidence against positive diagnosis.
+    """
     return _compute_metric(
         _negative_likelihood_ratio,
         tp,
@@ -717,63 +1380,55 @@ def negative_likelihood_ratio(
 
 
 _doc = """
+    Common documentation template for all metric functions.
 
     Args:
-        tp (torch.LongTensor): tensor of shape (N, C), true positive cases
-        fp (torch.LongTensor): tensor of shape (N, C), false positive cases
-        fn (torch.LongTensor): tensor of shape (N, C), false negative cases
-        tn (torch.LongTensor): tensor of shape (N, C), true negative cases
-        reduction (Optional[str]): Define how to aggregate metric between classes and images:
-
-            - 'micro'
-                Sum true positive, false positive, false negative and true negative pixels over
-                all images and all classes and then compute score.
-
-            - 'macro'
-                Sum true positive, false positive, false negative and true negative pixels over
-                all images for each label, then compute score for each label separately and average labels scores.
-                This does not take label imbalance into account.
-
-            - 'weighted'
-                Sum true positive, false positive, false negative and true negative pixels over
-                all images for each label, then compute score for each label separately and average
-                weighted labels scores.
-
-            - 'micro-imagewise'
-                Sum true positive, false positive, false negative and true negative pixels for **each image**,
-                then compute score for **each image** and average scores over dataset. All images contribute equally
-                to final score, however takes into accout class imbalance for each image.
-
-            - 'macro-imagewise'
-                Compute score for each image and for each class on that image separately, then compute average score
-                on each image over labels and average image scores over dataset. Does not take into account label
-                imbalance on each image.
-
-            - 'weighted-imagewise'
-                Compute score for each image and for each class on that image separately, then compute weighted average
-                score on each image over labels and average image scores over dataset.
-
-            - 'none' or ``None``
-                Same as ``'macro-imagewise'``, but without any reduction.
-
-            For ``'binary'`` case ``'micro' = 'macro' = 'weighted'`` and
-            ``'micro-imagewise' = 'macro-imagewise' = 'weighted-imagewise'``.
-
-            Prefixes ``'micro'``, ``'macro'`` and ``'weighted'`` define how the scores for classes will be aggregated,
-            while postfix ``'imagewise'`` defines how scores between the images will be aggregated.
-
-        class_weights (Optional[List[float]]): list of class weights for metric
-            aggregation, in case of `weighted*` reduction is chosen. Defaults to None.
-        zero_division (Union[str, float]): Sets the value to return when there is a zero division,
-            i.e. when all predictions and labels are negative. If set to “warn”, this acts as 0,
-            but warnings are also raised. Defaults to 1.
+        tp (torch.LongTensor): True positive counts with shape (N, C) where:
+            - N is the number of samples/images in the batch
+            - C is the number of classes
+        fp (torch.LongTensor): False positive counts with shape (N, C)
+        fn (torch.LongTensor): False negative counts with shape (N, C)  
+        tn (torch.LongTensor): True negative counts with shape (N, C)
+        reduction (Optional[str]): Aggregation strategy across classes and samples:
+            - "micro": Pool all classes together, then compute metric
+            - "macro": Compute metric per class, then unweighted average
+            - "weighted": Compute metric per class, then weighted average by class frequency
+            - "micro-imagewise": Compute metric per sample, then average across samples
+            - "macro-imagewise": Compute metric per class per sample, then average
+            - "weighted-imagewise": Weighted average per sample, then average across samples
+            - None: Return per-class metrics without aggregation
+        class_weights (Optional[List[float]]): Class-specific weights for weighted reduction.
+            Must be provided when using "weighted" or "weighted-imagewise" reduction.
+            Should sum to 1.0 and have length equal to number of classes.
+        zero_division (Union[str, float]): Handling strategy for division by zero:
+            - "warn": Replace NaN with 0 and issue warning (default for most metrics)
+            - float value: Replace NaN with this specific value
+            - Common values: 0.0 (conservative), 1.0 (optimistic)
 
     Returns:
-        torch.Tensor: if ``'reduction'`` is not ``None`` or ``'none'`` returns scalar metric,
-            else returns tensor of shape (N, C)
+        torch.Tensor: Computed metric values. Shape depends on reduction:
+            - With reduction: scalar tensor
+            - Without reduction: tensor of shape (C,) with per-class metrics
 
-    References:
-        https://en.wikipedia.org/wiki/Confusion_matrix
+    Note:
+        All metrics are computed from confusion matrix statistics (TP, FP, FN, TN).
+        Different reduction strategies are appropriate for different use cases:
+        - Use "micro" for overall performance across all classes
+        - Use "macro" when all classes are equally important
+        - Use "weighted" when class frequency should influence the metric
+        - Use imagewise variants for per-sample analysis
+
+    Examples:
+        >>> # Binary classification example
+        >>> tp = torch.tensor([[10], [8]])  # 2 samples, 1 class
+        >>> fp = torch.tensor([[2], [1]])
+        >>> fn = torch.tensor([[1], [3]])
+        >>> tn = torch.tensor([[5], [6]])
+        >>> 
+        >>> # Compute F1 score with different reductions
+        >>> f1_micro = f1_score(tp, fp, fn, tn, reduction="micro")
+        >>> f1_macro = f1_score(tp, fp, fn, tn, reduction="macro")
+        >>> f1_per_class = f1_score(tp, fp, fn, tn, reduction=None)
 """
 
 fbeta_score.__doc__ += _doc
