@@ -337,3 +337,125 @@ def plot_confusion_matrix(pred, truth, classes):
     
 
     return confusion_matrix
+
+
+
+def anomaly_detection_display(df, n_samples=10):
+    """
+    Display anomaly detection results with loss distribution and sample images.
+    
+    This function creates a comprehensive visualization for anomaly detection results
+    from an autoencoder, showing:
+    1. Distribution of reconstruction losses (histogram)
+    2. Most difficult to reconstruct images (anomalies - high loss)
+    3. Most typical images (normal - low loss)
+    
+    Args:
+        df (pandas.DataFrame): DataFrame containing columns:
+            - 'loss': reconstruction loss values
+            - 'input': input images (as tensors or arrays)
+            - 'reconstruction': reconstructed images (as tensors or arrays)
+        n_samples (int): Number of sample images to display for each category
+    
+    Returns:
+        None: Displays the plots
+    """
+    
+    # Create figure with subplots
+    fig = plt.figure(figsize=(15, 10))
+    
+    # Plot 1: Distribution of reconstruction losses
+    ax1 = plt.subplot(3, 1, 1)
+    plt.hist(df['loss'], bins=50, alpha=0.7, color='skyblue', edgecolor='black')
+    plt.xlabel('Score (loss)')
+    plt.ylabel('Count per bin')
+    plt.title('Distribution of score (loss)')
+    plt.grid(True, alpha=0.3)
+    
+    # Sort dataframe by loss for anomaly detection
+    df_sorted = df.sort_values('loss', ascending=False)
+    
+    # Get the most anomalous (highest loss) samples
+    anomalies = df_sorted.head(n_samples)
+    
+    # Get the most normal (lowest loss) samples  
+    normals = df_sorted.tail(n_samples)
+    
+    # Plot 2: Most difficult to reconstruct (anomalies)
+    ax2 = plt.subplot(3, 1, 2)
+    plt.title('Most difficult to reconstruct')
+    plt.axis('off')
+    
+    # Create a grid for anomaly samples
+    for i in range(min(n_samples, len(anomalies))):
+        # Input image (top row)
+        plt.subplot(3, n_samples * 2, n_samples * 2 + i + 1)
+        img_input = anomalies.iloc[i]['input']
+        if hasattr(img_input, 'cpu'):  # Handle torch tensors
+            img_input = img_input.cpu().detach().numpy()
+        if len(img_input.shape) == 3 and img_input.shape[0] in [1, 3]:  # CHW format
+            img_input = np.transpose(img_input, (1, 2, 0))
+        if img_input.shape[-1] == 1:  # Remove single channel dimension
+            img_input = img_input.squeeze(-1)
+        
+        plt.imshow(img_input, cmap='gray' if len(img_input.shape) == 2 else None)
+        plt.axis('off')
+        if i == 0:
+            plt.ylabel('Input', rotation=0, labelpad=20)
+        
+        # Reconstruction (bottom row)
+        plt.subplot(3, n_samples * 2, n_samples * 3 + i + 1)
+        img_recon = anomalies.iloc[i]['reconstruction']
+        if hasattr(img_recon, 'cpu'):  # Handle torch tensors
+            img_recon = img_recon.cpu().detach().numpy()
+        if len(img_recon.shape) == 3 and img_recon.shape[0] in [1, 3]:  # CHW format
+            img_recon = np.transpose(img_recon, (1, 2, 0))
+        if img_recon.shape[-1] == 1:  # Remove single channel dimension
+            img_recon = img_recon.squeeze(-1)
+            
+        plt.imshow(img_recon, cmap='gray' if len(img_recon.shape) == 2 else None)
+        plt.axis('off')
+        if i == 0:
+            plt.ylabel('Reconst', rotation=0, labelpad=20)
+    
+    # Add some spacing
+    plt.tight_layout()
+    
+    # Create a new figure for normal samples
+    fig2 = plt.figure(figsize=(15, 4))
+    plt.suptitle('Sample of in-distribution numbers', fontsize=14)
+    
+    # Plot normal samples
+    for i in range(min(n_samples, len(normals))):
+        # Input image (top row)
+        plt.subplot(2, n_samples, i + 1)
+        img_input = normals.iloc[i]['input']
+        if hasattr(img_input, 'cpu'):  # Handle torch tensors
+            img_input = img_input.cpu().detach().numpy()
+        if len(img_input.shape) == 3 and img_input.shape[0] in [1, 3]:  # CHW format
+            img_input = np.transpose(img_input, (1, 2, 0))
+        if img_input.shape[-1] == 1:  # Remove single channel dimension
+            img_input = img_input.squeeze(-1)
+        
+        plt.imshow(img_input, cmap='gray' if len(img_input.shape) == 2 else None)
+        plt.axis('off')
+        if i == 0:
+            plt.ylabel('Input', rotation=0, labelpad=20)
+        
+        # Reconstruction (bottom row)
+        plt.subplot(2, n_samples, n_samples + i + 1)
+        img_recon = normals.iloc[i]['reconstruction']
+        if hasattr(img_recon, 'cpu'):  # Handle torch tensors
+            img_recon = img_recon.cpu().detach().numpy()
+        if len(img_recon.shape) == 3 and img_recon.shape[0] in [1, 3]:  # CHW format
+            img_recon = np.transpose(img_recon, (1, 2, 0))
+        if img_recon.shape[-1] == 1:  # Remove single channel dimension
+            img_recon = img_recon.squeeze(-1)
+            
+        plt.imshow(img_recon, cmap='gray' if len(img_recon.shape) == 2 else None)
+        plt.axis('off')
+        if i == 0:
+            plt.ylabel('Reconst', rotation=0, labelpad=20)
+    
+    plt.tight_layout()
+    plt.show()
